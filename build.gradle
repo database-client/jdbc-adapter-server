@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+}
+
+group 'com.dbclient.jdbc'
+version '1.0'
+
+tasks.jar {
+    manifest.attributes["Main-Class"] = "com.dbclient.jdbc.server.JdbcApplication"
+}
+
+task fatJar(type: Jar) {
+    manifest.from jar.manifest
+    classifier = 'all'
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/**"
+    }
+    with jar
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '21.5.0.0'
+    implementation 'io.vertx:vertx-web:4.2.7'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}

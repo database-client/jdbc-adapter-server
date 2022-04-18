@@ -1,0 +1,19 @@
+# gradle 编译缓存
+.gradle
+# gradle wrapper, 包含gradle相关版本信息, 不过下载太慢, 没啥用
+#gradle/
+#gradlew
+#gradlew.bat
+# 编译文件
+out/
+target/
+build/
+.idea/
+*.log
+*.gz
+bin/
+.classpath
+.project
+.settings/
+node_modules/
+package-lock.json
