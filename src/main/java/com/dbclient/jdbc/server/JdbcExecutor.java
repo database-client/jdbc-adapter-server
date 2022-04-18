@@ -71,4 +71,7 @@ public class JdbcExecutor {
         }
     }
 
+    public Connection getConnection() {
+        return connection;
+    }
 }

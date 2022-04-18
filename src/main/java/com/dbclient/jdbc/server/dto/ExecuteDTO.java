@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class ExecuteDTO {
     private String sql;
-    private String jdbcUrl;
+    private String id;
 }

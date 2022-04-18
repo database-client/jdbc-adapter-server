@@ -27,6 +27,7 @@ repositories {
 dependencies {
     implementation group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '21.5.0.0'
     implementation 'io.vertx:vertx-web:4.2.7'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.2.2'
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
     annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
