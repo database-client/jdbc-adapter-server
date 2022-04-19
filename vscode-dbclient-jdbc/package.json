@@ -1,0 +1,37 @@
+{
+	"name": "dbclient-jdbc",
+	"displayName": "dbclient-jdbc",
+	"description": "JDBC Adapter For Database Client",
+	"version": "1.0.0",
+	"publisher": "cweijan",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/database-client/jdbc-adapter-server.git"
+	},
+	"engines": {
+		"vscode": "^1.60.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:dbclient-jdbc.helloWorld"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "dbclient-jdbc.helloWorld",
+				"title": "Hello World"
+			}
+		]
+	},
+	"scripts": {
+		"package": "vsce package",
+		"publish": "vsce publish"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.60.0",
+		"@types/node": "14.x"
+	}
+}

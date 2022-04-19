@@ -12,6 +12,7 @@ tasks.jar {
 task fatJar(type: Jar) {
     manifest.from jar.manifest
     classifier = 'all'
+    destinationDir = file("$rootDir/vscode-dbclient-jdbc")
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
