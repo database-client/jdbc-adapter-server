@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JdbcExecutor {
-    PreparedStatement ps;
+    private Statement statement;
     private final Connection connection;
 
     @SneakyThrows
@@ -34,13 +34,16 @@ public class JdbcExecutor {
                     .columns(queryBO.getColumns())
                     .build();
         }
-        connection.prepareStatement(sql).execute();
+        this.statement = connection.createStatement();
+        this.statement.execute(sql);
+        this.statement = null;
         return ExecuteResponse.builder().build();
     }
 
     @SneakyThrows
     public QueryBO executeQuery(String sql) {
-        ResultSet rs = connection.prepareStatement(sql).executeQuery();
+        this.statement = connection.createStatement();
+        ResultSet rs = this.statement.executeQuery(sql);
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
         // 生成列信息
@@ -58,16 +61,29 @@ public class JdbcExecutor {
             }
             rows.add(row);
         }
+        this.statement = null;
         return new QueryBO(rows, columns);
+    }
+
+    public void cancel() {
+        if (this.statement != null) {
+            try {
+                this.statement.cancel();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            } finally {
+                this.statement = null;
+            }
+        }
     }
 
     public void close() throws Exception {
         //关闭连接和释放资源
+        if (statement != null) {
+            statement.close();
+        }
         if (connection != null) {
             connection.close();
-        }
-        if (ps != null) {
-            ps.close();
         }
     }
 
