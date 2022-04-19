@@ -5,23 +5,27 @@ import com.dbclient.jdbc.server.dto.ExecuteDTO;
 import com.dbclient.jdbc.server.response.AliveCheckResponse;
 import com.dbclient.jdbc.server.response.ConnectResponse;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
+import com.dbclient.jdbc.server.util.ServerUtil;
+import com.sun.net.httpserver.HttpServer;
+import lombok.SneakyThrows;
 
+import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JdbcExecutorServer extends AbstractVerticle {
+public class JdbcExecutorServer {
 
     public static final Map<String, JdbcExecutor> executorMap = new HashMap<>();
 
-    @Override
-    public void start() {
-        Router router = Router.router(vertx);
-        router.route().handler(BodyHandler.create());
-        router.post("/connect").handler(context -> {
-            ConnectDTO connectDTO = context.getBodyAsJson().mapTo(ConnectDTO.class);
+    @SneakyThrows
+    public static void main(String[] args) {
+
+        HttpServer server = HttpServer.create(new InetSocketAddress(7823), 0);
+        server.createContext("/test",exchange -> {
+            ServerUtil.writeResponse(exchange,"hello");
+        });
+        server.createContext("/connect", exchange -> {
+            ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String errorMessage = null;
             try {
                 JdbcExecutor jdbcExecutor = executorMap.get(connectDTO.getId());
@@ -33,14 +37,14 @@ public class JdbcExecutorServer extends AbstractVerticle {
                 errorMessage = e.getMessage();
                 e.printStackTrace();
             } finally {
-                context.json(ConnectResponse.builder()
+                ServerUtil.writeResponse(exchange, ConnectResponse.builder()
                         .success(errorMessage == null)
                         .err(errorMessage)
                         .build());
             }
         });
-        router.post("/execute").handler(context -> {
-            ExecuteDTO executeDTO = context.getBodyAsJson().mapTo(ExecuteDTO.class);
+        server.createContext("/execute", exchange -> {
+            ExecuteDTO executeDTO = ServerUtil.read(exchange, ExecuteDTO.class);
             JdbcExecutor jdbcExecutor = executorMap.get(executeDTO.getId());
             ExecuteResponse executeResponse = null;
             try {
@@ -51,11 +55,12 @@ public class JdbcExecutorServer extends AbstractVerticle {
                 executeResponse = ExecuteResponse.builder().err(e.getMessage()).build();
                 e.printStackTrace();
             } finally {
-                context.json(executeResponse);
+                System.out.println(executeDTO.getId());
+                ServerUtil.writeResponse(exchange, executeResponse);
             }
         });
-        router.post("/close").handler(context -> {
-            ConnectDTO connectDTO = context.getBodyAsJson().mapTo(ConnectDTO.class);
+        server.createContext("/close", exchange -> {
+            ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             JdbcExecutor jdbcExecutor = executorMap.get(connectDTO.getId());
             try {
                 if (jdbcExecutor != null) {
@@ -63,30 +68,28 @@ public class JdbcExecutorServer extends AbstractVerticle {
                 }
             } catch (Exception ignored) {
             } finally {
-                executorMap.remove(connectDTO.getId());
-                context.end("");
+                executorMap.remove(connectDTO.getJdbcUrl());
+                ServerUtil.writeResponse(exchange, "");
             }
         });
-        router.post("/alive").handler(context -> {
-            ConnectDTO connectDTO = context.getBodyAsJson().mapTo(ConnectDTO.class);
+        server.createContext("/alive", exchange -> {
+            ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             JdbcExecutor jdbcExecutor = executorMap.get(connectDTO.getId());
             AliveCheckResponse aliveCheckResponse = null;
             try {
                 if (jdbcExecutor != null) {
-                    aliveCheckResponse = new AliveCheckResponse(jdbcExecutor.getConnection().isClosed());
+                    aliveCheckResponse = new AliveCheckResponse(!jdbcExecutor.getConnection().isClosed());
                 }
             } catch (Exception e) {
                 aliveCheckResponse = new AliveCheckResponse(false);
                 e.printStackTrace();
             } finally {
-                context.json(aliveCheckResponse);
+                ServerUtil.writeResponse(exchange, aliveCheckResponse);
             }
         });
-        vertx.createHttpServer()
-                .requestHandler(router)
-                .listen(7823)
-                .onSuccess(server ->
-                        System.out.println("HTTP server started on port " + server.actualPort())
-                );
+        server.setExecutor(null);
+        server.start();
+        System.out.println("HTTP server started on port " + server.getAddress().getPort());
     }
+
 }
