@@ -95,7 +95,11 @@ public class JdbcExecutorServer {
             AliveCheckResponse aliveCheckResponse = null;
             try {
                 if (jdbcExecutor != null) {
-                    aliveCheckResponse = new AliveCheckResponse(!jdbcExecutor.getConnection().isClosed());
+                    boolean alive = !jdbcExecutor.getConnection().isClosed();
+                    if (alive) {
+                        jdbcExecutor.execute("SELECT 1 FROM DUAL");
+                    }
+                    aliveCheckResponse = new AliveCheckResponse(alive);
                 }
             } catch (Exception e) {
                 aliveCheckResponse = new AliveCheckResponse(false);
