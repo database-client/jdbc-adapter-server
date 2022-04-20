@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+<!--    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%-5p] %replace(%caller{1}){'\t|Caller.{1}0|\r\n', ''} : %m %n" />-->
+    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%-5p] : %m %n" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+<!--        <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+<!--            <file>${LOG_PATH}/info.log</file>-->
+<!--            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+<!--                <fileNamePattern>${LOG_PATH}/info/info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
+<!--                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">-->
+<!--                    <maxFileSize>10MB</maxFileSize>-->
+<!--                </timeBasedFileNamingAndTriggeringPolicy>-->
+<!--            </rollingPolicy>-->
+<!--            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
+<!--                <pattern>${FILE_LOG_PATTERN}</pattern>-->
+<!--                <charset>utf-8</charset>-->
+<!--            </encoder>-->
+<!--        </appender>-->
+    </root>
+
+</configuration>

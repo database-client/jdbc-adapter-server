@@ -8,11 +8,13 @@ import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.ServerUtil;
 import com.sun.net.httpserver.HttpServer;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class JdbcExecutorServer {
 
     public static final Map<String, JdbcExecutor> executorMap = new HashMap<>();
@@ -29,7 +31,7 @@ public class JdbcExecutorServer {
             String errorMessage = null;
             try {
                 String id = connectDTO.getId();
-                System.out.println("Create connection for " + id);
+                log.info("Create connection for " + id);
                 JdbcExecutor jdbcExecutor = executorMap.get(id);
                 if (jdbcExecutor == null) {
                     jdbcExecutor = JdbcExecutor.create(connectDTO);
@@ -48,7 +50,7 @@ public class JdbcExecutorServer {
         server.createContext("/execute", exchange -> {
             ExecuteDTO executeDTO = ServerUtil.read(exchange, ExecuteDTO.class);
             String id = executeDTO.getId();
-            System.out.println("Execute SQL for " + id);
+            log.info("Execute SQL for {}", id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             ExecuteResponse executeResponse = null;
             try {
@@ -59,14 +61,13 @@ public class JdbcExecutorServer {
                 executeResponse = ExecuteResponse.builder().err(e.getMessage()).build();
                 e.printStackTrace();
             } finally {
-                System.out.println(id);
                 ServerUtil.writeResponse(exchange, executeResponse);
             }
         });
         server.createContext("/close", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String id = connectDTO.getId();
-            System.out.println("Close connection for " + id);
+            log.info("Close connection for " + id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             try {
                 if (jdbcExecutor != null) {
@@ -81,7 +82,7 @@ public class JdbcExecutorServer {
         server.createContext("/cancel", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String id = connectDTO.getId();
-            System.out.println("Cancel execute for " + id);
+            log.info("Cancel execute for " + id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             if (jdbcExecutor != null) {
                 jdbcExecutor.cancel();
@@ -90,7 +91,7 @@ public class JdbcExecutorServer {
         server.createContext("/alive", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String id = connectDTO.getId();
-            System.out.println("Check alive for " + id);
+            log.info("Check connection {} alive..", id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             AliveCheckResponse aliveCheckResponse = null;
             try {
@@ -110,7 +111,7 @@ public class JdbcExecutorServer {
         });
         server.setExecutor(null);
         server.start();
-        System.out.println("HTTP server started on port " + server.getAddress().getPort());
+        log.info("HTTP server started on port " + server.getAddress().getPort());
     }
 
 }
