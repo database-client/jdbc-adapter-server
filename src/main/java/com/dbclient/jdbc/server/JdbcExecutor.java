@@ -27,7 +27,8 @@ public class JdbcExecutor {
 
     @SneakyThrows
     public ExecuteResponse execute(String sql) {
-        if (sql.toLowerCase().startsWith("select")) {
+        String lowerSQL = sql.toLowerCase();
+        if (lowerSQL.startsWith("select")) {
             QueryBO queryBO = this.executeQuery(sql);
             return ExecuteResponse.builder()
                     .rows(queryBO.getRows())
@@ -35,6 +36,13 @@ public class JdbcExecutor {
                     .build();
         }
         this.statement = connection.createStatement();
+        if (lowerSQL.startsWith("update") || lowerSQL.startsWith("delete")) {
+            int affectedRows = this.statement.executeUpdate(sql);
+            this.statement = null;
+            return ExecuteResponse.builder()
+                    .affectedRows(affectedRows)
+                    .build();
+        }
         this.statement.execute(sql);
         this.statement = null;
         return ExecuteResponse.builder().build();

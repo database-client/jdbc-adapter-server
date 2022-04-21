@@ -10,6 +10,7 @@ tasks.jar {
 }
 
 task fatJar(type: Jar) {
+    group = 'build'
     manifest.from jar.manifest
     classifier = 'all'
     destinationDir = file("$rootDir/vscode-dbclient-jdbc")
