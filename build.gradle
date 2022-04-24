@@ -6,6 +6,8 @@ group 'com.dbclient.jdbc'
 version '1.0'
 
 tasks.jar {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
     manifest.attributes["Main-Class"] = "com.dbclient.jdbc.server.JdbcExecutorServer"
 }
 
