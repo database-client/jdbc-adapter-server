@@ -2,7 +2,7 @@
 	"name": "dbclient-jdbc",
 	"displayName": "dbclient-jdbc",
 	"description": "JDBC Adapter For Database Client",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"icon": "icon.png",
 	"publisher": "cweijan",
 	"repository": {
