@@ -65,12 +65,22 @@ public class JdbcExecutor {
         while (rs.next()) {
             List<Object> row = new ArrayList<>(columnCount);
             for (int i = 1; i <= columnCount; i++) {
-                row.add(rs.getObject(i));
+                Object object = rs.getObject(i);
+                object = parseClob(object);
+                row.add(object);
             }
             rows.add(row);
         }
         this.statement = null;
         return new QueryBO(rows, columns);
+    }
+
+    private Object parseClob(Object object) throws SQLException {
+        if (object instanceof Clob) {
+            Clob clob = (Clob) object;
+            return clob.getSubString(1, (int) clob.length());
+        }
+        return object;
     }
 
     public void cancel() {
