@@ -5,6 +5,7 @@ import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import lombok.SneakyThrows;
+import oracle.sql.TIMESTAMP;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -65,14 +66,21 @@ public class JdbcExecutor {
         while (rs.next()) {
             List<Object> row = new ArrayList<>(columnCount);
             for (int i = 1; i <= columnCount; i++) {
-                Object object = rs.getObject(i);
-                object = parseClob(object);
-                row.add(object);
+                row.add(getColumnValue(rs, i));
             }
             rows.add(row);
         }
         this.statement = null;
         return new QueryBO(rows, columns);
+    }
+
+    private Object getColumnValue(ResultSet rs, int i) throws SQLException {
+        Object object = rs.getObject(i);
+        object = parseClob(object);
+        if (object instanceof Timestamp || object instanceof TIMESTAMP) {
+            return object.toString();
+        }
+        return object;
     }
 
     private Object parseClob(Object object) throws SQLException {
