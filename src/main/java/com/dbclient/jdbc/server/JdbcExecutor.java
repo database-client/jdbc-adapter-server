@@ -5,12 +5,14 @@ import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import oracle.sql.TIMESTAMP;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class JdbcExecutor {
     private Statement statement;
     private final Connection connection;
@@ -28,6 +30,7 @@ public class JdbcExecutor {
 
     @SneakyThrows
     public ExecuteResponse execute(String sql) {
+        log.info("Executing SQL: {}",sql);
         String lowerSQL = sql.toLowerCase();
         if (lowerSQL.startsWith("select")) {
             QueryBO queryBO = this.executeQuery(sql);

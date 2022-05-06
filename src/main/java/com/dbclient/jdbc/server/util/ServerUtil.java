@@ -17,11 +17,8 @@ public class ServerUtil {
 
     @SneakyThrows
     public static <T> T read(HttpExchange exchange, Class<T> clazz) {
-//        String s = IOUtils.toString(exchange.getRequestBody());
-        String s = new BufferedReader(new InputStreamReader(exchange.getRequestBody()))
+        String s = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))
                 .lines().collect(Collectors.joining("\n"));
-//        return JSON.parse(s, clazz);
-//        return JSON.parseObject(s,clazz);
         return gson.fromJson(s, clazz);
     }
 
