@@ -2,7 +2,7 @@
 	"name": "dbclient-jdbc",
 	"displayName": "dbclient-jdbc",
 	"description": "JDBC Adapter For Database Client",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"icon": "icon.png",
 	"publisher": "cweijan",
 	"repository": {
@@ -16,16 +16,10 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:dbclient-jdbc.helloWorld"
 	],
 	"main": "./extension.js",
 	"contributes": {
-		"commands": [
-			{
-				"command": "dbclient-jdbc.helloWorld",
-				"title": "Hello World"
-			}
-		]
+		"commands": []
 	},
 	"scripts": {
 		"package": "vsce package",
