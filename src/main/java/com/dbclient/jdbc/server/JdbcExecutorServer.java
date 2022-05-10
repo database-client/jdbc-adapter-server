@@ -55,7 +55,12 @@ public class JdbcExecutorServer {
             ExecuteResponse executeResponse = null;
             try {
                 if (jdbcExecutor != null) {
-                    executeResponse = jdbcExecutor.execute(executeDTO.getSql());
+                    String[] sqlList = executeDTO.getSqlList();
+                    if (sqlList != null) {
+                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList));
+                    } else {
+                        executeResponse = jdbcExecutor.execute(executeDTO.getSql());
+                    }
                 }
             } catch (Exception e) {
                 executeResponse = ExecuteResponse.builder().err(e.getMessage()).build();

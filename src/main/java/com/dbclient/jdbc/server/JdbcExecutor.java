@@ -10,7 +10,9 @@ import oracle.sql.TIMESTAMP;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class JdbcExecutor {
@@ -26,6 +28,15 @@ public class JdbcExecutor {
     public static JdbcExecutor create(ConnectDTO connectDTO) {
         String jdbcUrl = connectDTO.getJdbcUrl();
         return new JdbcExecutor(connectDTO.getDriver(), jdbcUrl, connectDTO.getUsername(), connectDTO.getPassword());
+    }
+
+    /**
+     * Batch execute sql
+     * @param sqlList sql array
+     */
+    @SneakyThrows
+    public List<ExecuteResponse> executeBatch(String[] sqlList) {
+        return Arrays.stream(sqlList).map(this::execute).collect(Collectors.toList());
     }
 
     @SneakyThrows
