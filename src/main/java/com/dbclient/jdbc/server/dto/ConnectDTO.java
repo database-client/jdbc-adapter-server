@@ -9,4 +9,5 @@ public class ConnectDTO {
     private String driver;
     private String username;
     private String password;
+    private boolean readonly;
 }

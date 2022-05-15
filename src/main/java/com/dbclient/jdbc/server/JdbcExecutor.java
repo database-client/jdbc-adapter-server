@@ -20,18 +20,17 @@ public class JdbcExecutor {
     private final Connection connection;
 
     @SneakyThrows
-    public JdbcExecutor(String driver, String jdbcUrl, String username, String password) {
-        Class.forName(driver);
-        connection = DriverManager.getConnection(jdbcUrl, username, password);
-    }
-
-    public static JdbcExecutor create(ConnectDTO connectDTO) {
-        String jdbcUrl = connectDTO.getJdbcUrl();
-        return new JdbcExecutor(connectDTO.getDriver(), jdbcUrl, connectDTO.getUsername(), connectDTO.getPassword());
+    public JdbcExecutor(ConnectDTO connectDTO) {
+        Class.forName(connectDTO.getDriver());
+        connection = DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
+        if(connectDTO.isReadonly()){
+            connection.setReadOnly(true);
+        }
     }
 
     /**
      * Batch execute sql
+     *
      * @param sqlList sql array
      */
     @SneakyThrows
@@ -41,7 +40,7 @@ public class JdbcExecutor {
 
     @SneakyThrows
     public ExecuteResponse execute(String sql) {
-        log.info("Executing SQL: {}",sql);
+        log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
         if (lowerSQL.startsWith("select")) {
             QueryBO queryBO = this.executeQuery(sql);

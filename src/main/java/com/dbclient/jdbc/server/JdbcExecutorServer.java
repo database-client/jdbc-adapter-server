@@ -34,7 +34,7 @@ public class JdbcExecutorServer {
                 log.info("Create connection for " + id);
                 JdbcExecutor jdbcExecutor = executorMap.get(id);
                 if (jdbcExecutor == null) {
-                    jdbcExecutor = JdbcExecutor.create(connectDTO);
+                    jdbcExecutor = new JdbcExecutor(connectDTO);
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {
