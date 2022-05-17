@@ -58,6 +58,7 @@ public class JdbcExecutor {
                     .build();
         }
         this.statement.execute(sql);
+        this.statement.close();
         this.statement = null;
         return ExecuteResponse.builder().build();
     }
@@ -83,6 +84,7 @@ public class JdbcExecutor {
             }
             rows.add(row);
         }
+        this.statement.close();
         this.statement = null;
         return new QueryBO(rows, columns);
     }
