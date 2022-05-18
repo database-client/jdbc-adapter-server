@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import oracle.sql.TIMESTAMP;
 
 import java.sql.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class JdbcExecutor {
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private Statement statement;
     private final Connection connection;
 
@@ -23,7 +25,7 @@ public class JdbcExecutor {
     public JdbcExecutor(ConnectDTO connectDTO) {
         Class.forName(connectDTO.getDriver());
         connection = DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
-        if(connectDTO.isReadonly()){
+        if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
         }
     }
@@ -92,8 +94,11 @@ public class JdbcExecutor {
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
         Object object = rs.getObject(i);
         object = parseClob(object);
-        if (object instanceof Timestamp || object instanceof TIMESTAMP) {
-            return object.toString();
+        if (object instanceof Timestamp) {
+            return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
+        }
+        if (object instanceof TIMESTAMP) {
+            return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         }
         return object;
     }
