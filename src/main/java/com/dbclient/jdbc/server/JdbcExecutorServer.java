@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class JdbcExecutorServer {
@@ -79,6 +80,7 @@ public class JdbcExecutorServer {
                     jdbcExecutor.close();
                 }
             } catch (Exception ignored) {
+                log.error("Close connection fail", ignored);
             } finally {
                 executorMap.remove(connectDTO.getJdbcUrl());
                 ServerUtil.writeResponse(exchange, "");
@@ -114,7 +116,7 @@ public class JdbcExecutorServer {
                 ServerUtil.writeResponse(exchange, aliveCheckResponse);
             }
         });
-        server.setExecutor(null);
+        server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         log.info("HTTP server started on port " + server.getAddress().getPort());
     }

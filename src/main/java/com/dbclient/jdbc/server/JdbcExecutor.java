@@ -126,6 +126,7 @@ public class JdbcExecutor {
     public void close() throws Exception {
         //关闭连接和释放资源
         if (statement != null) {
+            statement.cancel();
             statement.close();
         }
         if (connection != null) {
