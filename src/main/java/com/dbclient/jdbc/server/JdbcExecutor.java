@@ -41,7 +41,7 @@ public class JdbcExecutor {
     }
 
     @SneakyThrows
-    public ExecuteResponse execute(String sql) {
+    public synchronized ExecuteResponse execute(String sql) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
         if (lowerSQL.startsWith("select")) {
