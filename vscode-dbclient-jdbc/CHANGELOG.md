@@ -1,5 +1,15 @@
 # Change Log
 
-All notable changes to the "dbclient-jdbc" extension will be documented in this file.
+# 1.2.0 2022-6-6
+- Support load jdbc drivers dynamically.
+- Kill jdbc server after reload vscode.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+# 1.1.3 2022-5-29
+- Synchronous SQL execution.
+
+# 1.1.1 2022-5-19
+- Using multiple thread and support cancel connection.
+
+# 1.1.0 2022-5-18
+- Support set connection as readonly.
+- Support show correct time value. 

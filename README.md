@@ -33,6 +33,7 @@ Content-Type: application/json
   "driverPath": "D:/mysql-connector-java-8.0.29.jar",
   "username": "root",
   "password": "root",
+  "readonly": false,
   "id": "mysql-connection"
 }
 ```
