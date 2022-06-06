@@ -1,0 +1,10 @@
+POST http://127.0.0.1:7823/connect
+Content-Type: application/json
+
+{
+  "jdbcUrl": "jdbc:mysql://localhost:3306/test",
+  "driver": "com.mysql.cj.jdbc.Driver",
+  "username": "root",
+  "password": "root",
+  "id": "0c4ddd82a053-4ddd33332"
+}

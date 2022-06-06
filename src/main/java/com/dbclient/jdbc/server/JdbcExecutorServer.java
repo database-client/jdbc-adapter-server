@@ -39,7 +39,7 @@ public class JdbcExecutorServer {
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {
-                errorMessage = e.getMessage();
+                errorMessage = e.getClass().getName() + ": " + e.getMessage();
                 e.printStackTrace();
             } finally {
                 ServerUtil.writeResponse(exchange, ConnectResponse.builder()
