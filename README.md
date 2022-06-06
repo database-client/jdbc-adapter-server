@@ -37,6 +37,9 @@ Content-Type: application/json
 }
 ```
 
+Parameter:
+id: The id of the connection, specified by the user.
+
 ### alive
 
 ```http request
@@ -86,3 +89,7 @@ Content-Type: application/json
   "id": "mysql-connection"
 }
 ```
+
+##
+
+build: gradle fatJar
