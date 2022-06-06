@@ -99,7 +99,7 @@ public class JdbcExecutor {
         List<ColumnMeta> columns = new ArrayList<>(columnCount);
         for (int i = 0; i < columnCount; i++) {
             int i1 = i + 1;
-            columns.add(new ColumnMeta(metaData.getColumnName(i1), metaData.getColumnTypeName(i1), metaData.getTableName(i1)));
+            columns.add(new ColumnMeta(metaData.getColumnLabel(i1), metaData.getColumnTypeName(i1), metaData.getTableName(i1)));
         }
         // 生成二维数组数据
         List<List<Object>> rows = new ArrayList<>();
