@@ -8,11 +8,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.TIMESTAMP;
 
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,14 +20,38 @@ public class JdbcExecutor {
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private Statement statement;
     private final Connection connection;
+    private final Map<String, URLClassLoader> loaderMap = new HashMap<>();
 
     @SneakyThrows
     public JdbcExecutor(ConnectDTO connectDTO) {
-        Class.forName(connectDTO.getDriver());
-        connection = DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
+        this.checkClass(connectDTO);
+        connection = connectDTO.getUsername() == null ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
+                DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
         if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
         }
+    }
+
+    @SneakyThrows
+    private void checkClass(ConnectDTO connectDTO) {
+        if (connectDTO.getDriverPath() != null) {
+            if (!loaderMap.containsKey(connectDTO.getDriverPath())) {
+                this.loadDriver(connectDTO);
+            }
+        } else {
+            Class.forName(connectDTO.getDriver());
+        }
+    }
+
+    @SneakyThrows
+    private void loadDriver(ConnectDTO connectDTO) {
+        String driverPath = connectDTO.getDriverPath();
+        String driver = connectDTO.getDriver();
+        URL u = new URL("jar:file:" + driverPath + "!/");
+        URLClassLoader ucl = new URLClassLoader(new URL[]{u});
+        Driver d = (Driver) Class.forName(driver, true, ucl).newInstance();
+        DriverManager.registerDriver(new DriverShim(d));
+        loaderMap.put(driverPath, ucl);
     }
 
     /**
