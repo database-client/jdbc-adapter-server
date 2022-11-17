@@ -6,14 +6,19 @@ import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oracle.sql.BLOB;
 import oracle.sql.TIMESTAMP;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 @Slf4j
 public class JdbcExecutor {
@@ -118,6 +123,9 @@ public class JdbcExecutor {
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
         Object object = rs.getObject(i);
         object = parseClob(object);
+        if (object instanceof BLOB) {
+            object = "Not Support Blob";
+        }
         if (object instanceof Timestamp) {
             return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
         }
@@ -125,6 +133,18 @@ public class JdbcExecutor {
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         }
         return object;
+    }
+
+    @SneakyThrows
+    private static String blobToString(BLOB blob) {
+        if (blob == null) return null;
+        byte[] data = new byte[(int) blob.length()];
+        try (BufferedInputStream instream = new BufferedInputStream(blob.getBinaryStream())) {
+            instream.read(data);
+        } catch (Exception ex) {
+            throw new Exception(ex.getMessage());
+        }
+        return new String(data);
     }
 
     private Object parseClob(Object object) throws SQLException {
