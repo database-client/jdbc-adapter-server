@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JdbcExecutor {
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private Statement statement;
+    private Set<Statement> statements = new HashSet<>();
     private final Connection connection;
     private final Map<String, URLClassLoader> loaderMap = new HashMap<>();
 
@@ -71,31 +71,41 @@ public class JdbcExecutor {
     public synchronized ExecuteResponse execute(String sql) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
-        if (PatternUtils.match(lowerSQL,"^(select|with)")) {
-            QueryBO queryBO = this.executeQuery(sql);
-            return ExecuteResponse.builder()
-                    .rows(queryBO.getRows())
-                    .columns(queryBO.getColumns())
-                    .build();
-        }
-        this.statement = connection.createStatement();
-        if (lowerSQL.startsWith("update") || lowerSQL.startsWith("delete")) {
-            int affectedRows = this.statement.executeUpdate(sql);
-            this.statement = null;
+        if (PatternUtils.match(lowerSQL, "^\\s*(insert|update|delete)")) {
+            Statement statement = newStatement();
+            int affectedRows = statement.executeUpdate(sql);
+            closeStatement(statement);
             return ExecuteResponse.builder()
                     .affectedRows(affectedRows)
                     .build();
         }
-        this.statement.execute(sql);
-        this.statement.close();
-        this.statement = null;
-        return ExecuteResponse.builder().build();
+        QueryBO queryBO = this.executeQuery(sql);
+        return ExecuteResponse.builder()
+                .rows(queryBO.getRows())
+                .columns(queryBO.getColumns())
+                .build();
+    }
+
+
+    @SneakyThrows
+    private Statement newStatement() {
+        Statement statement = connection.createStatement();
+        statements.add(statement);
+        return statement;
+    }
+
+    private void closeStatement(Statement statement) throws SQLException {
+        try {
+            statement.close();
+        } finally {
+            statements.remove(statement);
+        }
     }
 
     @SneakyThrows
     public QueryBO executeQuery(String sql) {
-        this.statement = connection.createStatement();
-        ResultSet rs = this.statement.executeQuery(sql);
+        Statement statement = newStatement();
+        ResultSet rs = statement.executeQuery(sql);
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
         // 生成列信息
@@ -106,15 +116,19 @@ public class JdbcExecutor {
         }
         // 生成二维数组数据
         List<List<Object>> rows = new ArrayList<>();
-        while (rs.next()) {
-            List<Object> row = new ArrayList<>(columnCount);
-            for (int i = 1; i <= columnCount; i++) {
-                row.add(getColumnValue(rs, i));
+        try {
+            while (rs.next()) {
+                List<Object> row = new ArrayList<>(columnCount);
+                for (int i = 1; i <= columnCount; i++) {
+                    row.add(getColumnValue(rs, i));
+                }
+                rows.add(row);
             }
-            rows.add(row);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        } finally {
+            closeStatement(statement);
         }
-        this.statement.close();
-        this.statement = null;
         return new QueryBO(rows, columns);
     }
 
@@ -153,23 +167,28 @@ public class JdbcExecutor {
         return object;
     }
 
+    @SneakyThrows
     public void cancel() {
-        if (this.statement != null) {
+        for (Statement statement : statements) {
             try {
-                this.statement.cancel();
+                statement.cancel();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.getMessage(), e);
             } finally {
-                this.statement = null;
+                statement.close();
             }
         }
     }
 
     public void close() throws Exception {
-        //关闭连接和释放资源
-        if (statement != null) {
-            statement.cancel();
-            statement.close();
+        for (Statement statement : statements) {
+            try {
+                statement.cancel();
+            } catch (SQLException e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                statement.close();
+            }
         }
         if (connection != null) {
             connection.close();
