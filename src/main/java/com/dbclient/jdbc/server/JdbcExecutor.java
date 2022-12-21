@@ -4,21 +4,19 @@ import com.dbclient.jdbc.server.dto.ColumnMeta;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
+import com.dbclient.jdbc.server.util.PatternUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.BLOB;
 import oracle.sql.TIMESTAMP;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
 
 @Slf4j
 public class JdbcExecutor {
@@ -73,7 +71,7 @@ public class JdbcExecutor {
     public synchronized ExecuteResponse execute(String sql) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
-        if (lowerSQL.startsWith("select")) {
+        if (PatternUtils.match(lowerSQL,"^(select|with)")) {
             QueryBO queryBO = this.executeQuery(sql);
             return ExecuteResponse.builder()
                     .rows(queryBO.getRows())
