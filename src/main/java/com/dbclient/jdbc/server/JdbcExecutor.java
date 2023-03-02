@@ -11,6 +11,7 @@ import oracle.sql.BLOB;
 import oracle.sql.TIMESTAMP;
 
 import java.io.BufferedInputStream;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.*;
@@ -137,6 +138,9 @@ public class JdbcExecutor {
         object = parseClob(object);
         if (object instanceof BLOB) {
             object = "Not Support Blob";
+        }
+        if (object instanceof BigDecimal) {
+            object = object.toString();
         }
         if (object instanceof Timestamp) {
             return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
