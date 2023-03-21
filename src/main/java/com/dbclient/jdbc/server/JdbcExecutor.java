@@ -11,9 +11,12 @@ import oracle.sql.BLOB;
 import oracle.sql.TIMESTAMP;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -50,6 +53,9 @@ public class JdbcExecutor {
     @SneakyThrows
     private void loadDriver(ConnectDTO connectDTO) {
         String driverPath = connectDTO.getDriverPath();
+        if (!new File(driverPath).exists()) {
+            throw new RuntimeException("Driver " + driverPath + " not exists!");
+        }
         String driver = connectDTO.getDriver();
         URL u = new URL("jar:file:" + driverPath + "!/");
         URLClassLoader ucl = new URLClassLoader(new URL[]{u});
