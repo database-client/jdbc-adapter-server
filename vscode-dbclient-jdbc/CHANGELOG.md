@@ -1,5 +1,8 @@
 # Change Log
 
+# 1.2.4 2023-3-29
+- Support for limiting the size of rows when querying.
+
 # 1.2.0 2022-6-6
 - Support load jdbc drivers dynamically.
 - Kill jdbc server after reload vscode.
