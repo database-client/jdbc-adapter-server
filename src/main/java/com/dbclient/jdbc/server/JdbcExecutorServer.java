@@ -28,6 +28,7 @@ public class JdbcExecutorServer {
             ServerUtil.writeResponse(exchange, "hello");
         });
         server.createContext("/connect", exchange -> {
+            log.info("connect");
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String errorMessage = null;
             try {
@@ -57,11 +58,10 @@ public class JdbcExecutorServer {
             try {
                 if (jdbcExecutor != null) {
                     String[] sqlList = executeDTO.getSqlList();
-                    Integer fetchCount = executeDTO.getFetchCount();
                     if (sqlList != null) {
-                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList, fetchCount));
+                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList, executeDTO));
                     } else {
-                        executeResponse = jdbcExecutor.execute(executeDTO.getSql(), fetchCount);
+                        executeResponse = jdbcExecutor.execute(executeDTO.getSql(), executeDTO);
                     }
                 }
             } catch (Exception e) {
@@ -106,7 +106,7 @@ public class JdbcExecutorServer {
                 if (jdbcExecutor != null) {
                     boolean alive = !jdbcExecutor.getConnection().isClosed();
                     if (alive) {
-                        jdbcExecutor.execute("SELECT 1 FROM DUAL",null);
+                        jdbcExecutor.execute("SELECT 1 FROM DUAL", new ExecuteDTO());
                     }
                     aliveCheckResponse = new AliveCheckResponse(alive);
                 }

@@ -2,6 +2,7 @@ package com.dbclient.jdbc.server;
 
 import com.dbclient.jdbc.server.dto.ColumnMeta;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
+import com.dbclient.jdbc.server.dto.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.PatternUtils;
@@ -65,15 +66,16 @@ public class JdbcExecutor {
     /**
      * Batch execute sql
      *
-     * @param sqlList sql array
+     * @param sqlList    sql array
+     * @param executeDTO
      */
     @SneakyThrows
-    public List<ExecuteResponse> executeBatch(String[] sqlList, Integer fetchCount) {
-        return Arrays.stream(sqlList).map(s -> execute(s, fetchCount)).collect(Collectors.toList());
+    public List<ExecuteResponse> executeBatch(String[] sqlList, ExecuteDTO executeDTO) {
+        return Arrays.stream(sqlList).map(s -> execute(s, executeDTO)).collect(Collectors.toList());
     }
 
     @SneakyThrows
-    public synchronized ExecuteResponse execute(String sql, Integer fetchCount) {
+    public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
         if (PatternUtils.match(lowerSQL, "^\\s*(insert|update|delete)")) {
@@ -84,7 +86,7 @@ public class JdbcExecutor {
                     .affectedRows(affectedRows)
                     .build();
         }
-        QueryBO queryBO = this.executeQuery(sql, fetchCount);
+        QueryBO queryBO = this.executeQuery(sql, executeDTO);
         return ExecuteResponse.builder()
                 .rows(queryBO.getRows())
                 .columns(queryBO.getColumns())
@@ -94,7 +96,10 @@ public class JdbcExecutor {
 
     @SneakyThrows
     private Statement newStatement() {
-        Statement statement = connection.createStatement();
+        Statement statement = connection.createStatement(
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_UPDATABLE
+        );
         statements.add(statement);
         return statement;
     }
@@ -108,13 +113,16 @@ public class JdbcExecutor {
     }
 
     @SneakyThrows
-    public QueryBO executeQuery(String sql, Integer fetchCount) {
+    public QueryBO executeQuery(String sql, ExecuteDTO executeDTO) {
         Statement statement = newStatement();
-        if (fetchCount != null) {
-            statement.setMaxRows(fetchCount);
-            statement.setFetchSize(fetchCount);
+        Integer skipRows = executeDTO.getSkipRows();
+        Integer fetchSize = executeDTO.getFetchSize();
+        if (fetchSize != null && skipRows == null) {
+            statement.setMaxRows(fetchSize);
+            statement.setFetchSize(fetchSize);
         }
         ResultSet rs = statement.executeQuery(sql);
+        log.info("执行结束, 开始获取数据...");
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
         // 生成列信息
@@ -124,6 +132,10 @@ public class JdbcExecutor {
             columns.add(new ColumnMeta(metaData.getColumnLabel(i1), metaData.getColumnTypeName(i1), metaData.getTableName(i1)));
         }
         // 生成二维数组数据
+        if (skipRows != null) {
+            if (fetchSize != null) rs.setFetchSize(fetchSize);
+            rs.absolute(skipRows);
+        }
         List<List<Object>> rows = new ArrayList<>();
         try {
             while (rs.next()) {
@@ -138,6 +150,7 @@ public class JdbcExecutor {
         } finally {
             closeStatement(statement);
         }
+        log.info("获取数据完成!");
         return new QueryBO(rows, columns);
     }
 
