@@ -15,8 +15,6 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -70,12 +68,12 @@ public class JdbcExecutor {
      * @param sqlList sql array
      */
     @SneakyThrows
-    public List<ExecuteResponse> executeBatch(String[] sqlList) {
-        return Arrays.stream(sqlList).map(this::execute).collect(Collectors.toList());
+    public List<ExecuteResponse> executeBatch(String[] sqlList, Integer fetchCount) {
+        return Arrays.stream(sqlList).map(s -> execute(s, fetchCount)).collect(Collectors.toList());
     }
 
     @SneakyThrows
-    public synchronized ExecuteResponse execute(String sql) {
+    public synchronized ExecuteResponse execute(String sql, Integer fetchCount) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
         if (PatternUtils.match(lowerSQL, "^\\s*(insert|update|delete)")) {
@@ -86,7 +84,7 @@ public class JdbcExecutor {
                     .affectedRows(affectedRows)
                     .build();
         }
-        QueryBO queryBO = this.executeQuery(sql);
+        QueryBO queryBO = this.executeQuery(sql, fetchCount);
         return ExecuteResponse.builder()
                 .rows(queryBO.getRows())
                 .columns(queryBO.getColumns())
@@ -110,8 +108,12 @@ public class JdbcExecutor {
     }
 
     @SneakyThrows
-    public QueryBO executeQuery(String sql) {
+    public QueryBO executeQuery(String sql, Integer fetchCount) {
         Statement statement = newStatement();
+        if (fetchCount != null) {
+            statement.setMaxRows(fetchCount);
+            statement.setFetchSize(fetchCount);
+        }
         ResultSet rs = statement.executeQuery(sql);
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();

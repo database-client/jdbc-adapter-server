@@ -7,4 +7,5 @@ public class ExecuteDTO {
     private String sql;
     private String[] sqlList;
     private String id;
+    private Integer fetchCount;
 }

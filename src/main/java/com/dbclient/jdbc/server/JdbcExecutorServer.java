@@ -57,10 +57,11 @@ public class JdbcExecutorServer {
             try {
                 if (jdbcExecutor != null) {
                     String[] sqlList = executeDTO.getSqlList();
+                    Integer fetchCount = executeDTO.getFetchCount();
                     if (sqlList != null) {
-                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList));
+                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList, fetchCount));
                     } else {
-                        executeResponse = jdbcExecutor.execute(executeDTO.getSql());
+                        executeResponse = jdbcExecutor.execute(executeDTO.getSql(), fetchCount);
                     }
                 }
             } catch (Exception e) {
@@ -105,7 +106,7 @@ public class JdbcExecutorServer {
                 if (jdbcExecutor != null) {
                     boolean alive = !jdbcExecutor.getConnection().isClosed();
                     if (alive) {
-                        jdbcExecutor.execute("SELECT 1 FROM DUAL");
+                        jdbcExecutor.execute("SELECT 1 FROM DUAL",null);
                     }
                     aliveCheckResponse = new AliveCheckResponse(alive);
                 }
