@@ -78,7 +78,7 @@ public class JdbcExecutor {
     public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
-        if (PatternUtils.match(lowerSQL, "^\\s*(insert|update|delete|declare)")) {
+        if (PatternUtils.match(lowerSQL, "^\\s*(insert|update|delete|declare|create|drop|alter)")) {
             Statement statement = newStatement();
             int affectedRows = statement.executeUpdate(sql);
             closeStatement(statement);
