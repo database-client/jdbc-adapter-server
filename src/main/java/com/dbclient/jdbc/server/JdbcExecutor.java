@@ -16,12 +16,15 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class JdbcExecutor {
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final String driver;
     private Set<Statement> statements = new HashSet<>();
@@ -75,14 +78,14 @@ public class JdbcExecutor {
         return Arrays.stream(sqlList).map(s -> execute(s, executeDTO)).collect(Collectors.toList());
     }
 
-    public boolean isOracle(){
+    public boolean isOracle() {
         return this.driver.contains("Oracle");
     }
 
-    public void testAlive(){
-        String sql="SELECT 1";
-        if(isOracle())sql+=" FROM DUAL";
-        execute(sql,new ExecuteDTO());
+    public void testAlive() {
+        String sql = "SELECT 1";
+        if (isOracle()) sql += " FROM DUAL";
+        execute(sql, new ExecuteDTO());
     }
 
     @SneakyThrows
@@ -179,6 +182,9 @@ public class JdbcExecutor {
         }
         if (object instanceof TIMESTAMP) {
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
+        }
+        if (object instanceof Date) {
+            object = dateFormat.format(object);
         }
         return object;
     }
