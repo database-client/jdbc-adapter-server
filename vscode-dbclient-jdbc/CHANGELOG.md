@@ -1,5 +1,9 @@
 # Change Log
 
+# 1.2.9 2023-12-1
+- Support parse blob.
+- Update connection verification SQL.
+
 # 1.2.6 2023-3-29
 - Support skip rows.
 - Support for limiting the size of rows when querying.
