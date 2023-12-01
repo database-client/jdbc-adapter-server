@@ -37,6 +37,7 @@ public class JdbcExecutorServer {
                 JdbcExecutor jdbcExecutor = executorMap.get(id);
                 if (jdbcExecutor == null) {
                     jdbcExecutor = new JdbcExecutor(connectDTO);
+                    jdbcExecutor.execute("SELECT 1 FROM DUAL", new ExecuteDTO());
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {

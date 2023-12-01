@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JdbcExecutor {
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final String driver;
     private Set<Statement> statements = new HashSet<>();
     private final Connection connection;
     private final Map<String, URLClassLoader> loaderMap = new HashMap<>();
@@ -30,6 +31,7 @@ public class JdbcExecutor {
     @SneakyThrows
     public JdbcExecutor(ConnectDTO connectDTO) {
         this.checkClass(connectDTO);
+        this.driver = connectDTO.getDriver();
         connection = connectDTO.getUsername() == null ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
                 DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
         if (connectDTO.isReadonly()) {
@@ -95,10 +97,9 @@ public class JdbcExecutor {
 
     @SneakyThrows
     private Statement newStatement() {
-        Statement statement = connection.createStatement(
-                ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_UPDATABLE
-        );
+        Statement statement = !this.driver.contains("OracleDriver") ? connection.createStatement() :
+                connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_UPDATABLE);
         statements.add(statement);
         return statement;
     }
