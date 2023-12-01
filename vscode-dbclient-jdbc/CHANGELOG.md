@@ -1,7 +1,8 @@
 # Change Log
 
-# 1.2.9 2023-12-1
-- Support parse blob.
+# 1.3.0 2023-12-1
+- Support parse blob and date.
+- Support execute use statement.
 - Update connection verification SQL.
 
 # 1.2.6 2023-3-29
