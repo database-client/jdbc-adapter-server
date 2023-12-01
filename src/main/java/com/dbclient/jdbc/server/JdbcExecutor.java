@@ -75,6 +75,16 @@ public class JdbcExecutor {
         return Arrays.stream(sqlList).map(s -> execute(s, executeDTO)).collect(Collectors.toList());
     }
 
+    public boolean isOracle(){
+        return this.driver.contains("Oracle");
+    }
+
+    public void testAlive(){
+        String sql="SELECT 1";
+        if(isOracle())sql+=" FROM DUAL";
+        execute(sql,new ExecuteDTO());
+    }
+
     @SneakyThrows
     public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
         log.info("Executing SQL: {}", sql);
@@ -97,7 +107,7 @@ public class JdbcExecutor {
 
     @SneakyThrows
     private Statement newStatement() {
-        Statement statement = !this.driver.contains("OracleDriver") ? connection.createStatement() :
+        Statement statement = !isOracle() ? connection.createStatement() :
                 connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_UPDATABLE);
         statements.add(statement);

@@ -37,7 +37,7 @@ public class JdbcExecutorServer {
                 JdbcExecutor jdbcExecutor = executorMap.get(id);
                 if (jdbcExecutor == null) {
                     jdbcExecutor = new JdbcExecutor(connectDTO);
-                    jdbcExecutor.execute("SELECT 1 FROM DUAL", new ExecuteDTO());
+                    jdbcExecutor.testAlive();
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {
@@ -107,7 +107,7 @@ public class JdbcExecutorServer {
                 if (jdbcExecutor != null) {
                     boolean alive = !jdbcExecutor.getConnection().isClosed();
                     if (alive) {
-                        jdbcExecutor.execute("SELECT 1 FROM DUAL", new ExecuteDTO());
+                        jdbcExecutor.testAlive();
                     }
                     aliveCheckResponse = new AliveCheckResponse(alive);
                 }
