@@ -142,7 +142,7 @@ public class JdbcExecutor {
         List<ColumnMeta> columns = new ArrayList<>(columnCount);
         for (int i = 0; i < columnCount; i++) {
             int i1 = i + 1;
-            columns.add(new ColumnMeta(metaData.getColumnLabel(i1), metaData.getColumnTypeName(i1), metaData.getTableName(i1)));
+            columns.add(new ColumnMeta(metaData.getColumnLabel(i1), metaData.getColumnTypeName(i1), getTableName(metaData, i1)));
         }
         // 生成二维数组数据
         if (skipRows != null) {
@@ -165,6 +165,16 @@ public class JdbcExecutor {
         }
         log.info("获取数据完成!");
         return new QueryBO(rows, columns);
+    }
+
+    private String getTableName(ResultSetMetaData metaData, int i1) throws SQLException {
+        if (this.driver.contains("Hive")) return null;
+        try {
+            return metaData.getTableName(i1);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
     }
 
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
