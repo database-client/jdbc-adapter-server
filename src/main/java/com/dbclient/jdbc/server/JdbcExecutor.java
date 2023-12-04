@@ -35,7 +35,8 @@ public class JdbcExecutor {
     public JdbcExecutor(ConnectDTO connectDTO) {
         this.checkClass(connectDTO);
         this.driver = connectDTO.getDriver();
-        connection = connectDTO.getUsername() == null ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
+        boolean noUser = connectDTO.getUsername() == null || connectDTO.getUsername().isEmpty();
+        connection = noUser ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
                 DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
         if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
