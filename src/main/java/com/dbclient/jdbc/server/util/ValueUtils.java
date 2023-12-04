@@ -1,6 +1,6 @@
 package com.dbclient.jdbc.server.util;
 
-public abstract class BinaryUtils {
+public abstract class ValueUtils {
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
@@ -12,6 +12,10 @@ public abstract class BinaryUtils {
             hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
         }
         return "0x" + new String(hexChars);
+    }
+
+    public static boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
     }
 
 }

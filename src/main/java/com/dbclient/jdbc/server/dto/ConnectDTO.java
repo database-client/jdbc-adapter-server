@@ -11,4 +11,6 @@ public class ConnectDTO {
     private String username;
     private String password;
     private boolean readonly;
+    private String aliveSQL;
+    private boolean noTableName;
 }

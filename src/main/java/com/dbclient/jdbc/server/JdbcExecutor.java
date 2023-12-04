@@ -5,8 +5,8 @@ import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
-import com.dbclient.jdbc.server.util.BinaryUtils;
 import com.dbclient.jdbc.server.util.PatternUtils;
+import com.dbclient.jdbc.server.util.ValueUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.TIMESTAMP;
@@ -26,17 +26,18 @@ import java.util.stream.Collectors;
 public class JdbcExecutor {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private final String driver;
     private Set<Statement> statements = new HashSet<>();
+    private String aliveSQL;
+    private final ConnectDTO option;
     private final Connection connection;
     private final Map<String, URLClassLoader> loaderMap = new HashMap<>();
 
     @SneakyThrows
     public JdbcExecutor(ConnectDTO connectDTO) {
+        this.option = connectDTO;
+        this.initAliveSQL();
         this.checkClass(connectDTO);
-        this.driver = connectDTO.getDriver();
-        boolean noUser = connectDTO.getUsername() == null || connectDTO.getUsername().isEmpty();
-        connection = noUser ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
+        connection = ValueUtils.isEmpty(connectDTO.getUsername()) ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
                 DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
         if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
@@ -80,13 +81,19 @@ public class JdbcExecutor {
     }
 
     public boolean isOracle() {
-        return this.driver.contains("Oracle");
+        return this.option.getDriver().contains("Oracle");
     }
 
     public void testAlive() {
-        String sql = "SELECT 1";
-        if (isOracle()) sql += " FROM DUAL";
-        execute(sql, new ExecuteDTO());
+        execute(aliveSQL, new ExecuteDTO());
+    }
+
+    private void initAliveSQL() {
+        aliveSQL = option.getAliveSQL();
+        if (ValueUtils.isEmpty(aliveSQL)) {
+            aliveSQL = "SELECT 1";
+            if (isOracle()) aliveSQL += " FROM DUAL";
+        }
     }
 
     @SneakyThrows
@@ -169,7 +176,7 @@ public class JdbcExecutor {
     }
 
     private String getTableName(ResultSetMetaData metaData, int i1) throws SQLException {
-        if (this.driver.contains("Hive")) return null;
+        if (this.option.getDriver().contains("Hive") || option.isNoTableName()) return null;
         try {
             return metaData.getTableName(i1);
         } catch (Exception e) {
@@ -183,7 +190,7 @@ public class JdbcExecutor {
         object = parseClob(object);
         if (object instanceof Blob) {
             byte[] bytes = ((Blob) object).getBytes(1, (int) ((Blob) object).length());
-            object = BinaryUtils.bytesToHex(bytes);
+            object = ValueUtils.bytesToHex(bytes);
         }
         if (object instanceof BigDecimal) {
             object = object.toString();
