@@ -1,5 +1,9 @@
 # Change Log
 
+# 1.3.2 2023-12-4
+- Support config alive SQL.
+- Fix failed to get hive table name.
+
 # 1.3.0 2023-12-1
 - Support parse blob and date.
 - Support execute use statement.
