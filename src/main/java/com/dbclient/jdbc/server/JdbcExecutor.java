@@ -85,7 +85,12 @@ public class JdbcExecutor {
     }
 
     public void testAlive() {
-        execute(aliveSQL, new ExecuteDTO());
+        try {
+            execute(aliveSQL, new ExecuteDTO());
+        } catch (Exception e) {
+            if (e instanceof SQLSyntaxErrorException) return;
+            throw new RuntimeException(e);
+        }
     }
 
     private void initAliveSQL() {
