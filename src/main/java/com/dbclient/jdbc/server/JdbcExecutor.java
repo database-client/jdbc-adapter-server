@@ -161,14 +161,16 @@ public class JdbcExecutor {
                 rs.absolute(skipRows);
             }
         }
+        int fetchedCount = 0;
         List<List<Object>> rows = new ArrayList<>();
         try {
-            while (rs.next()) {
+            while (rs.next() && (fetchSize == null || fetchedCount < fetchSize)) {
                 List<Object> row = new ArrayList<>(columnCount);
                 for (int i = 1; i <= columnCount; i++) {
                     row.add(getColumnValue(rs, i));
                 }
                 rows.add(row);
+                fetchedCount++;
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
