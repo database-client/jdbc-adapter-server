@@ -154,8 +154,12 @@ public class JdbcExecutor {
         }
         // 生成二维数组数据
         if (skipRows != null) {
-            if (fetchSize != null) rs.setFetchSize(fetchSize);
-            rs.absolute(skipRows);
+            if (this.option.isNotSupportForward()) {
+                for (int i = 0; i < skipRows; i++) rs.next();
+            } else {
+                if (fetchSize != null) rs.setFetchSize(fetchSize);
+                rs.absolute(skipRows);
+            }
         }
         List<List<Object>> rows = new ArrayList<>();
         try {
