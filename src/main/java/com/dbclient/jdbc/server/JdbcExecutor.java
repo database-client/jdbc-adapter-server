@@ -37,11 +37,26 @@ public class JdbcExecutor {
         this.option = connectDTO;
         this.initAliveSQL();
         this.checkClass(connectDTO);
-        connection = ValueUtils.isEmpty(connectDTO.getUsername()) ? DriverManager.getConnection(connectDTO.getJdbcUrl()) :
-                DriverManager.getConnection(connectDTO.getJdbcUrl(), connectDTO.getUsername(), connectDTO.getPassword());
+        Properties properties = getConnectProperties(connectDTO);
+        connection = DriverManager.getConnection(connectDTO.getJdbcUrl(), properties);
         if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
         }
+    }
+
+    private static Properties getConnectProperties(ConnectDTO connectDTO) {
+        Properties properties = new Properties();
+        if (!ValueUtils.isEmpty(connectDTO.getUsername())) {
+            properties.put("user", connectDTO.getUsername());
+        }
+        if (!ValueUtils.isEmpty(connectDTO.getPassword())) {
+            properties.put("password", connectDTO.getPassword());
+        }
+        Map<String, Object> paramProperties = connectDTO.getProperties();
+        if (paramProperties != null) {
+            properties.putAll(paramProperties);
+        }
+        return properties;
     }
 
     @SneakyThrows

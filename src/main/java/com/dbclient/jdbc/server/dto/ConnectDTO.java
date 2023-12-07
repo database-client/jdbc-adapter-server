@@ -2,6 +2,8 @@ package com.dbclient.jdbc.server.dto;
 
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 public class ConnectDTO {
     private String id;
@@ -14,4 +16,5 @@ public class ConnectDTO {
     private String aliveSQL;
     private boolean noTableName;
     private boolean notSupportForward;
+    private Map<String,Object> properties;
 }
