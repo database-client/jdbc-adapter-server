@@ -123,7 +123,7 @@ public class JdbcExecutor {
     public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
-        if (PatternUtils.match(lowerSQL, "^\\s*(set|use|insert|update|delete|declare|create|drop|alter)")) {
+        if (!PatternUtils.match(lowerSQL, "^\\s*(select|show|describe|with)")) {
             Statement statement = newStatement();
             int affectedRows = statement.executeUpdate(sql);
             closeStatement(statement);
