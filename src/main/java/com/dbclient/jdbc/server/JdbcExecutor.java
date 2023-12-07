@@ -103,7 +103,10 @@ public class JdbcExecutor {
         try {
             execute(aliveSQL, new ExecuteDTO());
         } catch (Exception e) {
-            if (e instanceof SQLSyntaxErrorException) return;
+            if (e instanceof SQLSyntaxErrorException) {
+                log.error(e.getMessage(), e);
+                return;
+            }
             throw new RuntimeException(e);
         }
     }
