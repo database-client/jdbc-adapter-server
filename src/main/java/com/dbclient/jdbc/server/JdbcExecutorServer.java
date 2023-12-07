@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -24,6 +25,7 @@ public class JdbcExecutorServer {
     @SneakyThrows
     public static void main(String[] args) {
 
+        long start = new Date().getTime();
         HttpServer server = HttpServer.create(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 7823), 0);
         server.createContext("/test", exchange -> {
             ServerUtil.writeResponse(exchange, "hello");
@@ -121,7 +123,7 @@ public class JdbcExecutorServer {
         });
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
-        log.info("HTTP server started on port " + server.getAddress().getPort());
+        log.info("HTTP server started on port " + server.getAddress().getPort()+", Cost time: "+(new Date().getTime() - start)+" ms");
     }
 
 }
