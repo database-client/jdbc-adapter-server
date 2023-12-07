@@ -1,5 +1,10 @@
 # Change Log
 
+# 1.3.3 2023-12-7
+- Better pagination support.
+- Bind jdbc server to 127.0.0.1.
+- Support configuring custom parameters.
+
 # 1.3.2 2023-12-4
 - Support config alive SQL.
 - Fix failed to get hive table name.
