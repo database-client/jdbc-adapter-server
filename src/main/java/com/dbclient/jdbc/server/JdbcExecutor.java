@@ -213,31 +213,20 @@ public class JdbcExecutor {
 
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
         Object object = rs.getObject(i);
-        object = parseClob(object);
-        if (object instanceof Blob) {
-            byte[] bytes = ((Blob) object).getBytes(1, (int) ((Blob) object).length());
-            object = ValueUtils.bytesToHex(bytes);
-        }
-        if (object instanceof BigDecimal) {
-            object = object.toString();
-        }
-        if (object instanceof Timestamp) {
-            return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
-        }
-        if (object instanceof TIMESTAMP) {
-            return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
-        }
-        if (object instanceof Date) {
-            object = dateFormat.format(object);
-        }
-        return object;
-    }
-
-
-    private Object parseClob(Object object) throws SQLException {
         if (object instanceof Clob) {
             Clob clob = (Clob) object;
             return clob.getSubString(1, (int) clob.length());
+        } else if (object instanceof Blob) {
+            byte[] bytes = ((Blob) object).getBytes(1, (int) ((Blob) object).length());
+            return ValueUtils.bytesToHex(bytes);
+        } else if (object instanceof BigDecimal || object instanceof Time) {
+            return object.toString();
+        } else if (object instanceof Timestamp) {
+            return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
+        } else if (object instanceof TIMESTAMP) {
+            return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
+        } else if (object instanceof Date) {
+            return dateFormat.format(object);
         }
         return object;
     }
