@@ -37,8 +37,7 @@ dependencies {
     implementation 'ch.qos.logback:logback-core:1.2.6'
     implementation 'ch.qos.logback:logback-classic:1.2.6'
 
-    implementation group: 'ch.qos.logback', name: 'logback-core', version: '1.2.11'
-    implementation 'com.alibaba:fastjson:1.2.83'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
     annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
 }
