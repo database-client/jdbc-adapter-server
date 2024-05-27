@@ -59,14 +59,17 @@ public class JdbcExecutorServer {
             log.info("Execute SQL for {}", id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             ExecuteResponse executeResponse = null;
+            if (jdbcExecutor == null) {
+                ServerUtil.writeResponse(exchange, ExecuteResponse.builder().err("Connection " + id + " not found!").build());
+                return;
+            }
+
             try {
-                if (jdbcExecutor != null) {
-                    String[] sqlList = executeDTO.getSqlList();
-                    if (sqlList != null) {
-                        ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList, executeDTO));
-                    } else {
-                        executeResponse = jdbcExecutor.execute(executeDTO.getSql(), executeDTO);
-                    }
+                String[] sqlList = executeDTO.getSqlList();
+                if (sqlList != null) {
+                    ServerUtil.writeResponse(exchange, jdbcExecutor.executeBatch(sqlList, executeDTO));
+                } else {
+                    executeResponse = jdbcExecutor.execute(executeDTO.getSql(), executeDTO);
                 }
             } catch (Exception e) {
                 executeResponse = ExecuteResponse.builder().err(e.getMessage()).build();
@@ -123,7 +126,7 @@ public class JdbcExecutorServer {
         });
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
-        log.info("HTTP server started on port " + server.getAddress().getPort()+", Cost time: "+(new Date().getTime() - start)+" ms");
+        log.info("HTTP server started on port " + server.getAddress().getPort() + ", Cost time: " + (new Date().getTime() - start) + " ms");
     }
 
 }
