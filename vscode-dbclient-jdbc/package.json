@@ -9,6 +9,10 @@
 		"type": "git",
 		"url": "https://github.com/database-client/jdbc-adapter-server.git"
 	},
+	"bugs": {
+		"url": "https://github.com/cweijan/vscode-database-client/issues",
+		"email": "support@database-client.com"
+	},
 	"engines": {
 		"vscode": "^1.60.0"
 	},
