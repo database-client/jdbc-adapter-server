@@ -216,6 +216,11 @@ public class JdbcExecutor {
 
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
         Object object = rs.getObject(i);
+        return convertValue(object);
+    }
+
+    @SneakyThrows
+    private static Object convertValue(Object object) {
         if (object == null) return null;
         if (object instanceof Clob) {
             Clob clob = (Clob) object;
@@ -229,7 +234,15 @@ public class JdbcExecutor {
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof Date) {
             return dateFormat.format(object);
-        } else if (!TypeChecker.isPrimitive(object.getClass())) {
+        } else if (object instanceof Array) {
+            return Arrays.stream((Object[]) ((Array) object).getArray())
+                    .map(JdbcExecutor::convertValue)
+                    .toArray(Object[]::new);
+        } else if (object.getClass().isArray()) {
+            return Arrays.stream((Object[]) object)
+                    .map(JdbcExecutor::convertValue)
+                    .toArray(Object[]::new);
+        } else if (!TypeChecker.isPrimary(object.getClass())) {
             return object.toString();
         }
         return object;
