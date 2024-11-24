@@ -31,8 +31,9 @@ repositories {
     mavenCentral()
 }
 
+// https://mvnrepository.com
 dependencies {
-    implementation group: 'com.oracle.database.jdbc', name: 'ojdbc8', version: '21.5.0.0'
+    implementation 'com.oracle.database.jdbc:ojdbc8:23.6.0.24.10'
 
     implementation 'ch.qos.logback:logback-core:1.2.6'
     implementation 'ch.qos.logback:logback-classic:1.2.6'

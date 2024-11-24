@@ -222,6 +222,7 @@ public class JdbcExecutor {
     @SneakyThrows
     private static Object convertValue(Object object) {
         if (object == null) return null;
+        if (TypeChecker.isPrimary(object.getClass())) return object;
         if (object instanceof Clob) {
             Clob clob = (Clob) object;
             return clob.getSubString(1, (int) clob.length());
@@ -242,10 +243,8 @@ public class JdbcExecutor {
             return Arrays.stream((Object[]) object)
                     .map(JdbcExecutor::convertValue)
                     .toArray(Object[]::new);
-        } else if (!TypeChecker.isPrimary(object.getClass())) {
-            return object.toString();
         }
-        return object;
+        return object.toString();
     }
 
     @SneakyThrows

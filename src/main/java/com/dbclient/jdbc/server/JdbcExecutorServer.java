@@ -71,9 +71,10 @@ public class JdbcExecutorServer {
                 } else {
                     executeResponse = jdbcExecutor.execute(executeDTO.getSql(), executeDTO);
                 }
-            } catch (Exception e) {
-                executeResponse = ExecuteResponse.builder().err(e.getMessage()).build();
-                e.printStackTrace();
+            } catch (Error | Exception e) {
+                String errorMessage = e instanceof Error ? e.toString() : e.getMessage();
+                executeResponse = ExecuteResponse.builder().err(errorMessage).build();
+                log.error(e.getMessage(), e);
             } finally {
                 ServerUtil.writeResponse(exchange, executeResponse);
             }
