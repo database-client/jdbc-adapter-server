@@ -6,13 +6,13 @@ import com.dbclient.jdbc.server.dto.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.PatternUtils;
+import com.dbclient.jdbc.server.util.TypeChecker;
 import com.dbclient.jdbc.server.util.ValueUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.TIMESTAMP;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.*;
@@ -216,20 +216,21 @@ public class JdbcExecutor {
 
     private Object getColumnValue(ResultSet rs, int i) throws SQLException {
         Object object = rs.getObject(i);
+        if (object == null) return null;
         if (object instanceof Clob) {
             Clob clob = (Clob) object;
             return clob.getSubString(1, (int) clob.length());
         } else if (object instanceof Blob) {
             byte[] bytes = ((Blob) object).getBytes(1, (int) ((Blob) object).length());
             return ValueUtils.bytesToHex(bytes);
-        } else if (object instanceof BigDecimal || object instanceof Time) {
-            return object.toString();
         } else if (object instanceof Timestamp) {
             return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof TIMESTAMP) {
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof Date) {
             return dateFormat.format(object);
+        } else if (!TypeChecker.isPrimitive(object.getClass())) {
+            return object.toString();
         }
         return object;
     }
