@@ -10,6 +10,7 @@ import com.dbclient.jdbc.server.util.TypeChecker;
 import com.dbclient.jdbc.server.util.ValueUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import oracle.sql.REF;
 import oracle.sql.TIMESTAMP;
 
 import java.io.File;
@@ -243,6 +244,16 @@ public class JdbcExecutor {
             return Arrays.stream((Object[]) object)
                     .map(JdbcExecutor::convertValue)
                     .toArray(Object[]::new);
+        } else if (object instanceof SQLXML) {
+            return ((SQLXML) object).getString();
+        } else if (object instanceof Struct) {
+            return convertValue(((Struct) object).getAttributes());
+        } else if (object instanceof Ref) {
+            return ((Ref) object).getBaseTypeName() + " -> {" +
+                    Arrays.stream((Object[]) convertValue(((Struct) ((REF) object).getObject()).getAttributes()))
+                            .map(String::valueOf)
+                            .collect(Collectors.joining(", "))
+                    + "}";
         }
         return object.toString();
     }
