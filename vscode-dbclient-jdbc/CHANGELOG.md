@@ -1,5 +1,14 @@
 # Change Log
 
+# 1.3.7 2024-11-25
+- Added parsing support for Ref, Struct, SQLXML and array types.
+
+# 1.3.6 2024-9-4
+- Fix cannot display desc results.
+
+# 1.3.5 2024-5-2
+- Fix parsing error when JSON key is a number(Using Jackson instead of FastJSON).
+
 # 1.3.3 2023-12-7
 - Better pagination support.
 - Bind jdbc server to 127.0.0.1.
