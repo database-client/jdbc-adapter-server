@@ -2,8 +2,9 @@ package com.dbclient.jdbc.server;
 
 import com.dbclient.jdbc.server.dto.ColumnMeta;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
-import com.dbclient.jdbc.server.dto.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
+import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
+import com.dbclient.jdbc.server.dto.execute.SQLParam;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.PatternUtils;
 import com.dbclient.jdbc.server.util.TypeChecker;
@@ -94,7 +95,10 @@ public class JdbcExecutor {
      */
     @SneakyThrows
     public List<ExecuteResponse> executeBatch(String[] sqlList, ExecuteDTO executeDTO) {
-        return Arrays.stream(sqlList).map(s -> execute(s, executeDTO)).collect(Collectors.toList());
+        executeDTO.setParams(null);
+        return Arrays.stream(sqlList)
+                .map(s -> execute(s, executeDTO))
+                .collect(Collectors.toList());
     }
 
     public boolean isOracle() {
@@ -126,8 +130,9 @@ public class JdbcExecutor {
         log.info("Executing SQL: {}", sql);
         String lowerSQL = sql.toLowerCase();
         if (!PatternUtils.match(lowerSQL, "^\\s*(select|show|desc|describe|with)")) {
-            Statement statement = newStatement();
-            int affectedRows = statement.executeUpdate(sql);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            fillParams(statement, executeDTO.getParams());
+            int affectedRows = statement.executeUpdate();
             closeStatement(statement);
             return ExecuteResponse.builder()
                     .affectedRows(affectedRows)
@@ -138,6 +143,22 @@ public class JdbcExecutor {
                 .rows(queryBO.getRows())
                 .columns(queryBO.getColumns())
                 .build();
+    }
+
+    @SneakyThrows
+    private void fillParams(PreparedStatement statement, SQLParam[] params) {
+        if (params == null) return;
+        for (int i = 0; i < params.length; i++) {
+            SQLParam param = params[i];
+            if (param == null) continue;
+            switch (param.getType()) {
+                case HEX:
+                    statement.setBytes(i + 1, ValueUtils.hexToBytes(param.getValue()));
+                    break;
+                default:
+                    statement.setObject(i + 1, param.getValue());
+            }
+        }
     }
 
 

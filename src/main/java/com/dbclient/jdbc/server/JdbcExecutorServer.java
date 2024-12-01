@@ -1,7 +1,7 @@
 package com.dbclient.jdbc.server;
 
 import com.dbclient.jdbc.server.dto.ConnectDTO;
-import com.dbclient.jdbc.server.dto.ExecuteDTO;
+import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
 import com.dbclient.jdbc.server.response.AliveCheckResponse;
 import com.dbclient.jdbc.server.response.ConnectResponse;
 import com.dbclient.jdbc.server.response.ExecuteResponse;

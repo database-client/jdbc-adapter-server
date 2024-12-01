@@ -60,13 +60,15 @@ Content-Type: application/json
 
 {
   "id": "mysql-connection",
-  "sql": "select * from mysql.user",
+  "sql": "select * from mysql.user where user=?",
+  "params": [{"value": "root"}],
   "sqlList": ["select * from mysql.user","select * from mysql.user"]
 }
 ```
 
 Parameter:
 - sql: The SQL you want to execute.
+- params: The parameters of the SQL, the format is like this: [{"value": "value1"}, {"value": "value2"}].
 - sqlList: the SQL list you want to batch execute, When parameter sqlList is not empty, parameter sql will be ignored.
 
 ### cancel
