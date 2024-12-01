@@ -16,6 +16,7 @@ import oracle.sql.TIMESTAMP;
 import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.ByteBuffer;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -224,7 +225,9 @@ public class JdbcExecutor {
     private static Object convertValue(Object object) {
         if (object == null) return null;
         if (TypeChecker.isPrimary(object.getClass())) return object;
-        if (object instanceof Clob) {
+        if (object instanceof ByteBuffer) {
+            return ValueUtils.bytesToHex(((ByteBuffer) object).array());
+        } else if (object instanceof Clob) {
             Clob clob = (Clob) object;
             return clob.getSubString(1, (int) clob.length());
         } else if (object instanceof Blob) {
