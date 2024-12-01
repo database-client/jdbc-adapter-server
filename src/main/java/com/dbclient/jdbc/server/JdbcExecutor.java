@@ -218,7 +218,7 @@ public class JdbcExecutor {
                 rows.add(row);
                 fetchedCount++;
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             log.error(e.getMessage(), e);
         } finally {
             closeStatement(statement);
@@ -264,10 +264,8 @@ public class JdbcExecutor {
             return Arrays.stream((Object[]) ((Array) object).getArray())
                     .map(JdbcExecutor::convertValue)
                     .toArray(Object[]::new);
-        } else if (object.getClass().isArray()) {
-            return Arrays.stream((Object[]) object)
-                    .map(JdbcExecutor::convertValue)
-                    .toArray(Object[]::new);
+        } else if (object.getClass() == byte[].class) {
+            return ValueUtils.bytesToHex((byte[]) object);
         } else if (object instanceof SQLXML) {
             return ((SQLXML) object).getString();
         } else if (object instanceof Struct) {
@@ -279,6 +277,13 @@ public class JdbcExecutor {
                             .collect(Collectors.joining(", "))
                     + "}";
         }
+
+        // 这个不行, 不同类型的数组不能互相转换
+//        else if (object.getClass().isArray()) {
+//            return Arrays.stream((Object[]) object)
+//                    .map(JdbcExecutor::convertValue)
+//                    .toArray(Object[]::new);
+//        }
         return object.toString();
     }
 
