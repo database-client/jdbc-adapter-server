@@ -5,6 +5,7 @@ import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
 import com.dbclient.jdbc.server.response.AliveCheckResponse;
 import com.dbclient.jdbc.server.response.ConnectResponse;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
+import com.dbclient.jdbc.server.translator.DB2ErrorTranslator;
 import com.dbclient.jdbc.server.util.ServerUtil;
 import com.sun.net.httpserver.HttpServer;
 import lombok.SneakyThrows;
@@ -21,6 +22,8 @@ import java.util.concurrent.Executors;
 public class JdbcExecutorServer {
 
     public static final Map<String, JdbcExecutor> executorMap = new HashMap<>();
+
+    private static final DB2ErrorTranslator translator = new DB2ErrorTranslator();
 
     @SneakyThrows
     public static void main(String[] args) {
@@ -73,6 +76,7 @@ public class JdbcExecutorServer {
                 }
             } catch (Error | Exception e) {
                 String errorMessage = e instanceof Error ? e.toString() : e.getMessage();
+                errorMessage = translator.doTranslate(errorMessage);
                 executeResponse = ExecuteResponse.builder().err(errorMessage).build();
                 log.error(e.getMessage(), e);
             } finally {
