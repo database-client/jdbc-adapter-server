@@ -266,6 +266,10 @@ public class JdbcExecutor {
                     .toArray(Object[]::new);
         } else if (object.getClass() == byte[].class) {
             return ValueUtils.bytesToHex((byte[]) object);
+        } else if (object.getClass() == Object[].class) {
+            return Arrays.stream((Object[]) object)
+                    .map(JdbcExecutor::convertValue)
+                    .toArray(Object[]::new);
         } else if (object instanceof SQLXML) {
             return ((SQLXML) object).getString();
         } else if (object instanceof Struct) {
@@ -277,13 +281,6 @@ public class JdbcExecutor {
                             .collect(Collectors.joining(", "))
                     + "}";
         }
-
-        // 这个不行, 不同类型的数组不能互相转换
-//        else if (object.getClass().isArray()) {
-//            return Arrays.stream((Object[]) object)
-//                    .map(JdbcExecutor::convertValue)
-//                    .toArray(Object[]::new);
-//        }
         return object.toString();
     }
 
