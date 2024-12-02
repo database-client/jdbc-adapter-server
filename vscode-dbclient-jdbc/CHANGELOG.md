@@ -1,5 +1,9 @@
 # Change Log
 
+# 1.3.8 2024-12-2
+- Support for inserting binary data.
+- Support displaying more jdbc types.
+
 # 1.3.7 2024-11-25
 - Added parsing support for Ref, Struct, SQLXML and array types.
 
