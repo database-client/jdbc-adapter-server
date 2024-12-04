@@ -13,6 +13,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.REF;
 import oracle.sql.TIMESTAMP;
+import oracle.sql.TIMESTAMPTZ;
 
 import java.io.File;
 import java.net.URL;
@@ -254,10 +255,15 @@ public class JdbcExecutor {
         } else if (object instanceof Blob) {
             byte[] bytes = ((Blob) object).getBytes(1, (int) ((Blob) object).length());
             return ValueUtils.bytesToHex(bytes);
+        } else if (object instanceof java.sql.Date || object instanceof Time) {
+            return object.toString();
         } else if (object instanceof Timestamp) {
             return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
-        } else if (object instanceof TIMESTAMP) {
+        }
+        else if (object instanceof TIMESTAMP) { // Oracle内置的两个类型
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
+        } else if (object instanceof TIMESTAMPTZ) {
+            return ((TIMESTAMPTZ) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof Date) {
             return dateFormat.format(object);
         } else if (object instanceof Array) {
