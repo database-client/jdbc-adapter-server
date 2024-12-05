@@ -1,5 +1,8 @@
 # Change Log
 
+# 1.3.9 2024-12-6
+- Support parsing date and time.
+
 # 1.3.8 2024-12-2
 - Support for inserting binary data.
 - Support displaying more jdbc types.
