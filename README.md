@@ -1,4 +1,4 @@
-# jdbc-adapter-server
+# Jdbc Adapter Server
 
 This is a project to open jdbc as http service.
 
