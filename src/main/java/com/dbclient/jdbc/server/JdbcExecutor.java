@@ -214,13 +214,15 @@ public class JdbcExecutor {
             while (rs.next() && (fetchSize == null || fetchedCount < fetchSize)) {
                 List<Object> row = new ArrayList<>(columnCount);
                 for (int i = 1; i <= columnCount; i++) {
-                    row.add(getColumnValue(rs, i));
+                    try {
+                        row.add(getColumnValue(rs, i));
+                    } catch (SQLException e) {
+                        log.error(e.getMessage(), e);
+                    }
                 }
                 rows.add(row);
                 fetchedCount++;
             }
-        } catch (SQLException e) {
-            log.error(e.getMessage(), e);
         } finally {
             closeStatement(statement);
         }
@@ -259,8 +261,7 @@ public class JdbcExecutor {
             return object.toString();
         } else if (object instanceof Timestamp) {
             return ((Timestamp) object).toLocalDateTime().format(dateTimeFormatter);
-        }
-        else if (object instanceof TIMESTAMP) { // Oracle内置的两个类型
+        } else if (object instanceof TIMESTAMP) { // Oracle内置的两个类型
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof TIMESTAMPTZ) {
             return ((TIMESTAMPTZ) object).toLocalDateTime().format(dateTimeFormatter);
