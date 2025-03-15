@@ -2,10 +2,11 @@
 
 This is a project to open jdbc as http service.
 
-## Develop
+## Usage
 
-1. run com.dbclient.jdbc.server.JdbcExecutorServer.main
-2. After execute, http-api will be exposed on port 7823. 
+1. Download the jar file from [release](https://github.com/dbclient/dbclient-jdbc/releases).
+2. Run the jar file: `java -jar dbclient-jdbc-1.4.0.jar`
+3. After execute, http-api will be exposed on port 7823. 
 
 ## Http-Api
 
