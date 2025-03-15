@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
@@ -16,6 +17,9 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.util.*;
@@ -73,7 +77,8 @@ public abstract class DriverLoader {
             addJarFilesRecursively(driverFile, urls);
         } else {
             try {
-                File tempDir = new File(System.getProperty("user.home"), ".dbclient/drivers/decompress");
+                String fileName = FilenameUtils.getBaseName(driverFile.getName());
+                File tempDir = new File(System.getProperty("user.home"), ".dbclient/drivers/decompress/" + fileName);
                 if (!tempDir.exists())
                     tempDir.mkdirs();
                 decompressArchive(driverFile, tempDir);
@@ -96,6 +101,8 @@ public abstract class DriverLoader {
             File f = new File(destDir, entry.getName());
             if (entry.isDirectory()) {
                 if (!f.exists()) f.mkdirs();
+            } else if (isValidJar(f.getName()) || LibraryUtils.isLibraryFile(f.getName())) {
+                IOUtils.copy(i, Files.newOutputStream(Paths.get(destDir.getAbsolutePath(), f.getName())));
             } else {
                 IOUtils.copy(i, Files.newOutputStream(f.toPath()));
             }
@@ -110,12 +117,15 @@ public abstract class DriverLoader {
                     addJarFilesRecursively(file, urls);
                 } else if (isValidJar(file.getName())) {
                     urls.add(file.toURI().toURL());
+                } else if (LibraryUtils.isLibraryFile(file.getName())) {
+                    Path targetPath = LibraryUtils.getLibraryPath(file.getName());
+                    Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
         }
     }
 
-    private static  boolean isValidJar(String fileName){
+    private static boolean isValidJar(String fileName) {
         return fileName.endsWith(".jar") && !fileName.matches(".*(sources|javadoc).*");
     }
 
