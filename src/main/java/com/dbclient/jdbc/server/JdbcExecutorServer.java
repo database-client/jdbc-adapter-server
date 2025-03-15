@@ -7,6 +7,7 @@ import com.dbclient.jdbc.server.response.ConnectResponse;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.translator.DB2ErrorTranslator;
 import com.dbclient.jdbc.server.util.ServerUtil;
+import com.dbclient.jdbc.server.util.StringUtils;
 import com.sun.net.httpserver.HttpServer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class JdbcExecutorServer {
             log.info("connect");
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
             String errorMessage = null;
+            String fullErrorMessage = null;
             try {
                 String id = connectDTO.getId();
                 log.info("Create connection for " + id);
@@ -47,12 +49,20 @@ public class JdbcExecutorServer {
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {
-                errorMessage = e.getClass().getName() + ": " + e.getMessage();
+                String errMsg = e.getMessage();
+                if (StringUtils.isNotEmpty(errMsg)) {
+                    fullErrorMessage = e.getClass().getName() + ": " + e.getMessage();
+                    errorMessage = e.getClass().getSimpleName() + ": " + e.getMessage();
+                } else {
+                    errorMessage = e.getClass().getName();
+                    fullErrorMessage = errorMessage;
+                }
                 e.printStackTrace();
             } finally {
                 ServerUtil.writeResponse(exchange, ConnectResponse.builder()
                         .success(errorMessage == null)
                         .err(errorMessage)
+                        .fullErr(fullErrorMessage)
                         .build());
             }
         });

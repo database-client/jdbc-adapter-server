@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 public class ConnectResponse {
     private boolean success;
     private String err;
+    private String fullErr;
     private String version;
 }
