@@ -1,5 +1,6 @@
 package com.dbclient.jdbc.server;
 
+import com.dbclient.jdbc.server.driver.DriverLoader;
 import com.dbclient.jdbc.server.dto.ColumnMeta;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.QueryBO;
@@ -7,7 +8,6 @@ import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.execute.SQLParam;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.PatternUtils;
-import com.dbclient.jdbc.server.util.StringUtils;
 import com.dbclient.jdbc.server.util.TypeChecker;
 import com.dbclient.jdbc.server.util.ValueUtils;
 import lombok.SneakyThrows;
@@ -16,9 +16,6 @@ import oracle.sql.REF;
 import oracle.sql.TIMESTAMP;
 import oracle.sql.TIMESTAMPTZ;
 
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -35,14 +32,12 @@ public class JdbcExecutor {
     private String aliveSQL;
     private final ConnectDTO option;
     private final Connection connection;
-    private final Map<String, Boolean> loaderMap = new HashMap<>();
-    private final Map<String, Boolean> driverMap = new HashMap<>();
 
     @SneakyThrows
     public JdbcExecutor(ConnectDTO connectDTO) {
         this.option = connectDTO;
         this.initAliveSQL();
-        this.checkClass(connectDTO);
+        DriverLoader.loadDriverByDTO(connectDTO);
         Properties properties = getConnectProperties(connectDTO);
         connection = DriverManager.getConnection(connectDTO.getJdbcUrl(), properties);
         if (connectDTO.isReadonly()) {
@@ -63,43 +58,6 @@ public class JdbcExecutor {
             properties.putAll(paramProperties);
         }
         return properties;
-    }
-
-    @SneakyThrows
-    private void checkClass(ConnectDTO connectDTO) {
-        String driverPath = connectDTO.getDriverPath();
-        if (StringUtils.isEmpty(driverPath)) return;
-        loaderMap.computeIfAbsent(driverPath, (k) -> {
-            this.loadDriver(connectDTO);
-            return true;
-        });
-    }
-
-    @SneakyThrows
-    private void loadDriver(ConnectDTO connectDTO) {
-        String driverPath = connectDTO.getDriverPath();
-        if (!new File(driverPath).exists()) {
-            throw new RuntimeException("Driver " + driverPath + " not exists!");
-        }
-        URL driverUrl = new URL("jar:file:" + driverPath + "!/");
-        URLClassLoader driverLoader = new URLClassLoader(new URL[]{driverUrl});
-
-        // Auto load driver
-        ServiceLoader<Driver> serviceLoader = ServiceLoader.load(Driver.class, driverLoader);
-        for (Driver driver : serviceLoader) {
-            String name = driver.getClass().getName();
-            if (driverMap.containsKey(name)) continue;
-            DriverManager.registerDriver(new DriverShim(driver));
-            driverMap.put(name, Boolean.TRUE);
-        }
-
-        // Custom driver
-        String driver = connectDTO.getDriver();
-        if (StringUtils.isNotEmpty(driver) && !driverMap.containsKey(driver)) {
-            Driver customDriver = (Driver) Class.forName(driver, true, driverLoader).newInstance();
-            DriverManager.registerDriver(new DriverShim(customDriver));
-            driverMap.put(driver, Boolean.TRUE);
-        }
     }
 
     /**

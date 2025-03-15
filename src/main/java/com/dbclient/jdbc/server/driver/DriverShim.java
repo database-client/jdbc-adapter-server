@@ -1,4 +1,4 @@
-package com.dbclient.jdbc.server;
+package com.dbclient.jdbc.server.driver;
 
 import java.sql.*;
 import java.util.Properties;
