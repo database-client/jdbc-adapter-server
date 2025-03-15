@@ -7,6 +7,7 @@ import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
 import com.dbclient.jdbc.server.dto.execute.SQLParam;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.util.PatternUtils;
+import com.dbclient.jdbc.server.util.StringUtils;
 import com.dbclient.jdbc.server.util.TypeChecker;
 import com.dbclient.jdbc.server.util.ValueUtils;
 import lombok.SneakyThrows;
@@ -34,7 +35,8 @@ public class JdbcExecutor {
     private String aliveSQL;
     private final ConnectDTO option;
     private final Connection connection;
-    private final Map<String, URLClassLoader> loaderMap = new HashMap<>();
+    private final Map<String, Boolean> loaderMap = new HashMap<>();
+    private final Map<String, Boolean> driverMap = new HashMap<>();
 
     @SneakyThrows
     public JdbcExecutor(ConnectDTO connectDTO) {
@@ -65,13 +67,12 @@ public class JdbcExecutor {
 
     @SneakyThrows
     private void checkClass(ConnectDTO connectDTO) {
-        if (connectDTO.getDriverPath() != null) {
-            if (!loaderMap.containsKey(connectDTO.getDriverPath())) {
-                this.loadDriver(connectDTO);
-            }
-        } else {
-            Class.forName(connectDTO.getDriver());
-        }
+        String driverPath = connectDTO.getDriverPath();
+        if (StringUtils.isEmpty(driverPath)) return;
+        loaderMap.computeIfAbsent(driverPath, (k) -> {
+            this.loadDriver(connectDTO);
+            return true;
+        });
     }
 
     @SneakyThrows
@@ -80,12 +81,25 @@ public class JdbcExecutor {
         if (!new File(driverPath).exists()) {
             throw new RuntimeException("Driver " + driverPath + " not exists!");
         }
+        URL driverUrl = new URL("jar:file:" + driverPath + "!/");
+        URLClassLoader driverLoader = new URLClassLoader(new URL[]{driverUrl});
+
+        // Auto load driver
+        ServiceLoader<Driver> serviceLoader = ServiceLoader.load(Driver.class, driverLoader);
+        for (Driver driver : serviceLoader) {
+            String name = driver.getClass().getName();
+            if (driverMap.containsKey(name)) continue;
+            DriverManager.registerDriver(new DriverShim(driver));
+            driverMap.put(name, Boolean.TRUE);
+        }
+
+        // Custom driver
         String driver = connectDTO.getDriver();
-        URL u = new URL("jar:file:" + driverPath + "!/");
-        URLClassLoader ucl = new URLClassLoader(new URL[]{u});
-        Driver d = (Driver) Class.forName(driver, true, ucl).newInstance();
-        DriverManager.registerDriver(new DriverShim(d));
-        loaderMap.put(driverPath, ucl);
+        if (StringUtils.isNotEmpty(driver) && !driverMap.containsKey(driver)) {
+            Driver customDriver = (Driver) Class.forName(driver, true, driverLoader).newInstance();
+            DriverManager.registerDriver(new DriverShim(customDriver));
+            driverMap.put(driver, Boolean.TRUE);
+        }
     }
 
     /**
@@ -103,7 +117,7 @@ public class JdbcExecutor {
     }
 
     public boolean isOracle() {
-        return this.option.getDriver().contains("Oracle");
+        return this.option.getJdbcUrl().contains("oracle");
     }
 
     public void testAlive() {
@@ -231,7 +245,7 @@ public class JdbcExecutor {
     }
 
     private String getTableName(ResultSetMetaData metaData, int i1) throws SQLException {
-        if (this.option.getDriver().contains("Hive") || option.isNoTableName()) return null;
+        if (this.option.getJdbcUrl().contains("hive") || option.isNoTableName()) return null;
         try {
             return metaData.getTableName(i1);
         } catch (Exception e) {
