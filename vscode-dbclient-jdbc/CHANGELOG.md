@@ -1,5 +1,9 @@
 # Change Log
 
+# 1.4.0 2024-3-16
+- Automatically load drivers through service discovery.
+- Support loading drivers through folders and compressed files.
+
 # 1.3.9 2024-12-6
 - Support parsing date and time.
 
