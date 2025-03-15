@@ -39,8 +39,17 @@ Content-Type: application/json
 }
 ```
 
-Parameter:
-id: The id of the connection, specified by the user.
+#### Parameter
+
+| Parameter  | Required | Type    | Description                                  |
+|------------|----------|---------|----------------------------------------------|
+| id         | ✅       | String  | The ID of the connection. |
+| jdbcUrl    | ✅       | String  | The JDBC URL of the database.                |
+| driverPath | ✅       | String  | The path to the JDBC driver. It can be a JAR file, a directory, or a compressed archive. |
+| driver     | ❌       | String  | The class name of the JDBC driver.           |
+| username   | ❌       | String  | The username for the database.               |
+| password   | ❌       | String  | The password for the database.               |
+| readonly   | ❌       | Boolean | Whether to connect to the database in read-only mode. |
 
 ### alive
 
