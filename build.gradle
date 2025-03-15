@@ -44,6 +44,7 @@ dependencies {
     implementation 'xerces:xercesImpl:2.12.2'
     implementation 'com.oracle.database.xml:xdb6:18.3.0.0'
     implementation 'com.oracle.database.jdbc:ojdbc8:21.5.0.0'
+    implementation 'org.apache.commons:commons-compress:1.27.1'
 
     // Lombok
     compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'

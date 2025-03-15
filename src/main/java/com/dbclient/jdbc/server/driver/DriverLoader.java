@@ -3,9 +3,16 @@ package com.dbclient.jdbc.server.driver;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.util.StringUtils;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveInputStream;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.io.IOUtils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -13,6 +20,7 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.util.*;
 
+@Slf4j
 public abstract class DriverLoader {
 
     private static final Map<String, Boolean> loaderMap = new HashMap<>();
@@ -64,10 +72,34 @@ public abstract class DriverLoader {
         } else if (driverFile.isDirectory()) {
             addJarFilesRecursively(driverFile, urls);
         } else {
-            throw new RuntimeException("Unsupported driver path format: " + driverPath);
+            try {
+                File tempDir = new File(System.getProperty("user.home"), ".dbclient/drivers/decompress");
+                if (!tempDir.exists())
+                    tempDir.mkdirs();
+                decompressArchive(driverFile, tempDir);
+                addJarFilesRecursively(tempDir, urls);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                throw new RuntimeException("Unsupported driver path format: " + driverPath);
+            }
         }
-
         return new URLClassLoader(urls.toArray(new URL[0]));
+    }
+
+    @SneakyThrows
+    private static void decompressArchive(File archiveFile, File destDir) {
+        InputStream fi = Files.newInputStream(archiveFile.toPath());
+        BufferedInputStream bi = new BufferedInputStream(fi);
+        ArchiveInputStream<ArchiveEntry> i = new ArchiveStreamFactory().createArchiveInputStream(bi);
+        ArchiveEntry entry;
+        while ((entry = i.getNextEntry()) != null) {
+            File f = new File(destDir, entry.getName());
+            if (entry.isDirectory()) {
+                if (!f.exists()) f.mkdirs();
+            } else {
+                IOUtils.copy(i, Files.newOutputStream(f.toPath()));
+            }
+        }
     }
 
     private static void addJarFilesRecursively(File directory, List<URL> urls) throws IOException {
@@ -76,11 +108,15 @@ public abstract class DriverLoader {
             for (File file : files) {
                 if (file.isDirectory()) {
                     addJarFilesRecursively(file, urls);
-                } else if (file.getName().endsWith(".jar") && !file.getName().matches(".*(sources|javadoc).*")) {
+                } else if (isValidJar(file.getName())) {
                     urls.add(file.toURI().toURL());
                 }
             }
         }
+    }
+
+    private static  boolean isValidJar(String fileName){
+        return fileName.endsWith(".jar") && !fileName.matches(".*(sources|javadoc).*");
     }
 
 }
