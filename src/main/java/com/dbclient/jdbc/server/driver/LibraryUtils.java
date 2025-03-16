@@ -10,12 +10,15 @@ import java.nio.file.Paths;
 public class LibraryUtils {
 
     public static Path getLibraryPath(String libraryName) {
-        String libraryPath = System.getProperty("java.library.path");
-        String javaLibraryPath = libraryPath.split(isWindows() ? ";" : ":")[0];
-        log.info("Library path: {}", javaLibraryPath);
+        String javaLibraryPath = getJavaLibraryPath();
         File libraryDir = new File(javaLibraryPath);
         if (!libraryDir.exists()) libraryDir.mkdirs();
         return Paths.get(javaLibraryPath, libraryName);
+    }
+
+    public static String getJavaLibraryPath() {
+        String libraryPath = System.getProperty("java.library.path");
+        return libraryPath.split(isWindows() ? ";" : ":")[0];
     }
 
     private static boolean isWindows() {

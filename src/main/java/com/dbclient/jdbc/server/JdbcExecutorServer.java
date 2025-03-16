@@ -1,5 +1,6 @@
 package com.dbclient.jdbc.server;
 
+import com.dbclient.jdbc.server.driver.LibraryUtils;
 import com.dbclient.jdbc.server.dto.ConnectDTO;
 import com.dbclient.jdbc.server.dto.execute.ExecuteDTO;
 import com.dbclient.jdbc.server.response.AliveCheckResponse;
@@ -142,7 +143,8 @@ public class JdbcExecutorServer {
         });
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
-        log.info("HTTP server started on port " + server.getAddress().getPort() + ", Cost time: " + (new Date().getTime() - start) + " ms");
+        log.info("HTTP server started on port {}, Cost time: {} ms", server.getAddress().getPort(), new Date().getTime() - start);
+        log.info("JAVA library path: {}", LibraryUtils.getJavaLibraryPath());
     }
 
 }
