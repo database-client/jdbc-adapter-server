@@ -15,6 +15,6 @@ public class ConnectDTO {
     private boolean readonly;
     private String aliveSQL;
     private boolean noTableName;
-    private boolean notSupportForward;
+    private boolean supportForward;
     private Map<String,Object> properties;
 }

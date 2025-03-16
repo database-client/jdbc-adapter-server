@@ -137,9 +137,13 @@ public class JdbcExecutor {
 
     @SneakyThrows
     private Statement newStatement() {
-        Statement statement = !isOracle() ? connection.createStatement() :
-                connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                        ResultSet.CONCUR_UPDATABLE);
+        Statement statement;
+        if (isOracle() || this.option.isSupportForward()) {
+            statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY);
+        } else {
+            statement = connection.createStatement();
+        }
         statements.add(statement);
         return statement;
     }
@@ -173,11 +177,11 @@ public class JdbcExecutor {
         }
         // 生成二维数组数据
         if (skipRows != null) {
-            if (this.option.isNotSupportForward()) {
-                for (int i = 0; i < skipRows; i++) rs.next();
-            } else {
+            if (isOracle() || this.option.isSupportForward()) {
                 if (fetchSize != null) rs.setFetchSize(fetchSize);
                 rs.absolute(skipRows);
+            } else {
+                for (int i = 0; i < skipRows; i++) rs.next();
             }
         }
         int fetchedCount = 0;

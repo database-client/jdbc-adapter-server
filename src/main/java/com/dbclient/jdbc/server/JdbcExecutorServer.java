@@ -89,6 +89,7 @@ public class JdbcExecutorServer {
             } catch (Error | Exception e) {
                 String errorMessage = e instanceof Error ? e.toString() : e.getMessage();
                 errorMessage = translator.doTranslate(errorMessage);
+                if (StringUtils.isEmpty(errorMessage)) errorMessage = e.getClass().getName();
                 executeResponse = ExecuteResponse.builder().err(errorMessage).build();
                 log.error(e.getMessage(), e);
             } finally {
