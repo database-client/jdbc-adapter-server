@@ -6,6 +6,7 @@ import com.dbclient.jdbc.server.response.AliveCheckResponse;
 import com.dbclient.jdbc.server.response.ConnectResponse;
 import com.dbclient.jdbc.server.response.ExecuteResponse;
 import com.dbclient.jdbc.server.translator.DB2ErrorTranslator;
+import com.dbclient.jdbc.server.util.JSON;
 import com.dbclient.jdbc.server.util.ServerUtil;
 import com.dbclient.jdbc.server.util.StringUtils;
 import com.sun.net.httpserver.HttpServer;
@@ -35,8 +36,8 @@ public class JdbcExecutorServer {
             ServerUtil.writeResponse(exchange, "hello");
         });
         server.createContext("/connect", exchange -> {
-            log.info("connect");
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
+            log.info("connect, params: {}", JSON.toJSON(connectDTO));
             String errorMessage = null;
             String fullErrorMessage = null;
             try {

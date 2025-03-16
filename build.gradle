@@ -18,6 +18,7 @@ task fatJar(type: Jar) {
     group = 'build'
     manifest.from jar.manifest
     classifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     destinationDir = file("$rootDir/vscode-dbclient-jdbc")
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
@@ -40,10 +41,17 @@ dependencies {
     // Jackson
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.2'
 
-    // JDBC Drivers
+    // Azure
+    implementation('com.microsoft.azure:msal4j:1.19.1') {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+    }
+    // Oracle
     implementation 'xerces:xercesImpl:2.12.2'
     implementation 'com.oracle.database.xml:xdb6:18.3.0.0'
     implementation 'com.oracle.database.jdbc:ojdbc8:21.5.0.0'
+
+    // Compress
     implementation 'org.apache.commons:commons-compress:1.27.1'
 
     // Lombok
