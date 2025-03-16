@@ -1,5 +1,8 @@
 # Change Log
 
+# 1.4.1 2024-3-16
+- Add Azure connection library.
+
 # 1.4.0 2024-3-16
 - Automatically load drivers through service discovery.
 - Support loading drivers through folders and compressed files.
