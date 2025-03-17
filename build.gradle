@@ -23,7 +23,9 @@ task fatJar(type: Jar) {
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
-        exclude "META-INF/**"
+        exclude {
+            it.path.startsWith("META-INF/") && !it.path.startsWith("META-INF/services")
+        }
     }
     with jar
 }
