@@ -1,5 +1,9 @@
 # Change Log
 
+# 1.4.2 2024-3-17
+- Support configuration of supportForward.
+- Fix Oracle driver not being automatically loaded.
+
 # 1.4.1 2024-3-16
 - Add Azure connection library.
 
