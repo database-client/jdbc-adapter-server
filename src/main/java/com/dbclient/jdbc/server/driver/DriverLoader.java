@@ -34,11 +34,20 @@ public abstract class DriverLoader {
     @SneakyThrows
     public static void loadDriverByDTO(ConnectDTO connectDTO) {
         String path = connectDTO.getDriverPath();
-        if (StringUtils.isEmpty(path)) return;
-        loaderMap.computeIfAbsent(path, (k) -> {
-            DriverLoader.loadDriver(connectDTO.getDriverPath(), connectDTO.getDriver());
-            return true;
-        });
+        String driver = connectDTO.getDriver();
+        if (StringUtils.isNotEmpty(path)) {
+            loaderMap.computeIfAbsent(path, (k) -> {
+                DriverLoader.loadDriver(connectDTO.getDriverPath(), driver);
+                return true;
+            });
+        }
+        try {
+            if (StringUtils.isNotEmpty(driver)) {
+                Class.forName(driver);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
 
