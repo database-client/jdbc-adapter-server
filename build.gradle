@@ -9,17 +9,15 @@ group 'com.dbclient.jdbc'
 version '1.0'
 
 tasks.jar {
+    // Compile options
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
-    manifest.attributes["Main-Class"] = "com.dbclient.jdbc.server.JdbcExecutorServer"
-}
-
-task fatJar(type: Jar) {
-    group = 'build'
-    manifest.from jar.manifest
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // Jar Info
     archiveClassifier.set('all')
     destinationDirectory.set(file("$rootDir/vscode-dbclient-jdbc"))
+    manifest.attributes["Main-Class"] = "com.dbclient.jdbc.server.JdbcExecutorServer"
+    // Dependencies
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
@@ -27,7 +25,6 @@ task fatJar(type: Jar) {
             it.path.startsWith("META-INF/") && !it.path.startsWith("META-INF/services")
         }
     }
-    with jar
 }
 
 repositories {
