@@ -17,9 +17,9 @@ tasks.jar {
 task fatJar(type: Jar) {
     group = 'build'
     manifest.from jar.manifest
-    classifier = 'all'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    destinationDir = file("$rootDir/vscode-dbclient-jdbc")
+    archiveClassifier.set('all')
+    destinationDirectory.set(file("$rootDir/vscode-dbclient-jdbc"))
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
