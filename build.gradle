@@ -2,6 +2,11 @@ plugins {
     id 'java'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
 }
@@ -9,9 +14,6 @@ group 'com.dbclient.jdbc'
 version '1.0'
 
 tasks.jar {
-    // Compile options
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
     // Jar Info
     archiveClassifier.set('all')
     destinationDirectory.set(file("$rootDir/vscode-dbclient-jdbc"))
@@ -54,8 +56,8 @@ dependencies {
     implementation 'org.apache.commons:commons-compress:1.27.1'
 
     // Lombok
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
-    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.22'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
 }
 
 test {
