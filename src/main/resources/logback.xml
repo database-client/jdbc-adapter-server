@@ -13,19 +13,20 @@
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
-<!--        <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
-<!--            <file>${LOG_PATH}/info.log</file>-->
-<!--            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
-<!--                <fileNamePattern>${LOG_PATH}/info/info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>-->
-<!--                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">-->
-<!--                    <maxFileSize>10MB</maxFileSize>-->
-<!--                </timeBasedFileNamingAndTriggeringPolicy>-->
-<!--            </rollingPolicy>-->
-<!--            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">-->
-<!--                <pattern>${FILE_LOG_PATTERN}</pattern>-->
-<!--                <charset>utf-8</charset>-->
-<!--            </encoder>-->
-<!--        </appender>-->
+        <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>logs/jdbc-server.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <maxHistory>7</maxHistory>
+                <fileNamePattern>logs/jdbc-server-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    <maxFileSize>10MB</maxFileSize>
+                </timeBasedFileNamingAndTriggeringPolicy>
+            </rollingPolicy>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${log.pattern}</pattern>
+                <charset>utf-8</charset>
+            </encoder>
+        </appender>
     </root>
 
 </configuration>
