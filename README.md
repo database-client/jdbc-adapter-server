@@ -5,15 +5,15 @@ This is a project to open jdbc as http service.
 ## Usage
 
 1. Download the jar file from [release](https://github.com/database-client/jdbc-adapter-server/releases).
-2. Run the jar file: `java -jar dbclient-jdbc-1.4.0.jar`
-3. After execute, http-api will be exposed on port 7823. 
+2. Run the jar file: `java -jar jdbc-adapter-server-1.0-all.jar `
+3. After execute, http-api will be exposed on port 7823.
 
 ## Http-Api
 
 The http service will provide the following Api.
 
-| Api                 | Desc                             |
-|---------------------|----------------------------------|
+| Api              | Desc                             |
+| ---------------- | -------------------------------- |
 | [connect](#connect) | Connect to database by jdbc url. |
 | [alive](#alive)     | Check connection is alive.       |
 | [execute](#execute) | Execute SQL by connection.       |
@@ -24,7 +24,7 @@ The http service will provide the following Api.
 
 ### connect
 
-```http request
+```http
 POST http://127.0.0.1:7823/connect
 Content-Type: application/json
 
@@ -41,19 +41,19 @@ Content-Type: application/json
 
 #### Parameter
 
-| Parameter  | Required | Type    | Description                                  |
-|------------|----------|---------|----------------------------------------------|
-| id         | ✅       | String  | The ID of the connection. |
-| jdbcUrl    | ✅       | String  | The JDBC URL of the database.                |
+| Parameter  | Required | Type    | Description                                                                              |
+| ---------- | -------- | ------- | ---------------------------------------------------------------------------------------- |
+| id         | ✅       | String  | The ID of the connection.                                                                |
+| jdbcUrl    | ✅       | String  | The JDBC URL of the database.                                                            |
 | driverPath | ✅       | String  | The path to the JDBC driver. It can be a JAR file, a directory, or a compressed archive. |
-| driver     | ❌       | String  | The class name of the JDBC driver.           |
-| username   | ❌       | String  | The username for the database.               |
-| password   | ❌       | String  | The password for the database.               |
-| readonly   | ❌       | Boolean | Whether to connect to the database in read-only mode. |
+| driver     | ❌       | String  | The class name of the JDBC driver.                                                       |
+| username   | ❌       | String  | The username for the database.                                                           |
+| password   | ❌       | String  | The password for the database.                                                           |
+| readonly   | ❌       | Boolean | Whether to connect to the database in read-only mode.                                    |
 
 ### alive
 
-```http request
+```http
 POST http://127.0.0.1:7823/connect
 Content-Type: application/json
 
@@ -64,7 +64,7 @@ Content-Type: application/json
 
 ### execute
 
-```http request
+```http
 POST http://127.0.0.1:7823/execute
 Content-Type: application/json
 
@@ -77,13 +77,14 @@ Content-Type: application/json
 ```
 
 Parameter:
+
 - sql: The SQL you want to execute.
 - params: The parameters of the SQL, the format is like this: [{"value": "value1"}, {"value": "value2"}].
 - sqlList: the SQL list you want to batch execute, When parameter sqlList is not empty, parameter sql will be ignored.
 
 ### cancel
 
-```http request
+```http
 POST http://127.0.0.1:7823/cancel
 Content-Type: application/json
 
@@ -94,7 +95,7 @@ Content-Type: application/json
 
 ### close
 
-```http request
+```http
 POST http://127.0.0.1:7823/close
 Content-Type: application/json
 
@@ -102,7 +103,5 @@ Content-Type: application/json
   "id": "mysql-connection"
 }
 ```
-
-##
 
 build: gradle fatJar
