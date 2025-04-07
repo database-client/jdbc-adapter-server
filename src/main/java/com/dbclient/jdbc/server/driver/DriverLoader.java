@@ -94,7 +94,7 @@ public abstract class DriverLoader {
                 addJarFilesRecursively(tempDir, urls);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                throw new RuntimeException("Unsupported driver path format: " + driverPath);
+                throw new RuntimeException("Failed to load driver. Error: " + e.getMessage());
             }
         }
         return new URLClassLoader(urls.toArray(new URL[0]));
