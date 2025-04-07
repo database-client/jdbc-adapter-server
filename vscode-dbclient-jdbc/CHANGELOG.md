@@ -1,5 +1,8 @@
 # Change Log
 
+# 1.4.3 2024-4-7
+- Logging to a file.
+
 # 1.4.2 2024-3-17
 - Support configuration of supportForward.
 - Fix Oracle driver not being automatically loaded.
