@@ -14,13 +14,11 @@ import com.sun.net.httpserver.HttpServer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.concurrent.Executors;
 
 @Slf4j
@@ -53,6 +51,7 @@ public class JdbcExecutorServer {
                     executorMap.put(id, jdbcExecutor);
                 }
             } catch (Exception e) {
+                log.error(e.getMessage(), e);
                 String errMsg = e.getMessage();
                 if (StringUtils.isNotEmpty(errMsg)) {
                     fullErrorMessage = e.getClass().getName() + ": " + e.getMessage();
@@ -147,11 +146,11 @@ public class JdbcExecutorServer {
         server.createContext("/", exchange -> {
             String filePath = exchange.getRequestURI().getPath();
             if (filePath.equals("/")) filePath = "index.html";
-            
+
             // 获取文件扩展名
             String extension = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase();
             String contentType = getContentType(extension);
-            
+
             java.io.InputStream inputStream = JdbcExecutorServer.class.getClassLoader()
                     .getResourceAsStream("static/" + filePath);
             if (inputStream == null) {

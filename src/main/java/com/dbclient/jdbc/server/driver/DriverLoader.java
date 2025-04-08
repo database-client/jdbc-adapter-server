@@ -92,9 +92,11 @@ public abstract class DriverLoader {
                     tempDir.mkdirs();
                 decompressArchive(driverFile, tempDir);
                 addJarFilesRecursively(tempDir, urls);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                throw new RuntimeException("Failed to load driver. Error: " + e.getMessage());
+                throw e;
             }
         }
         return new URLClassLoader(urls.toArray(new URL[0]));
@@ -128,7 +130,11 @@ public abstract class DriverLoader {
                     urls.add(file.toURI().toURL());
                 } else if (LibraryUtils.isLibraryFile(file.getName())) {
                     Path targetPath = LibraryUtils.getLibraryPath(file.getName());
-                    Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    try {
+                        Files.copy(file.toPath(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
                 }
             }
         }
