@@ -1,5 +1,8 @@
 # Change Log
 
+# 1.4.4 2024-4-8
+- implement the fault tolerance for driver loading failures.
+
 # 1.4.3 2024-4-7
 - Logging to a file.
 
