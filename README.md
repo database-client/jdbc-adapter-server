@@ -1,28 +1,26 @@
-# Jdbc Adapter Server
+# JDBC Adapter Server
 
-This is a project to open jdbc as http service.
+A lightweight HTTP service that provides JDBC database access through HTTP endpoints.
 
-## Usage
+## Quick Start
 
-1. Download the jar file from [release](https://github.com/database-client/jdbc-adapter-server/releases).
-2. Run the jar file: `java -jar jdbc-adapter-server-1.0-all.jar `
-3. After execute, http-api will be exposed on port 7823.
+1. Download the latest JAR file from [releases](https://github.com/database-client/jdbc-adapter-server/releases)
+2. Run the JAR file: `java -jar jdbc-adapter-server-1.0-all.jar`
+3. The HTTP API will be available on port 7823
 
-## Http-Api
+## API Endpoints
 
-The http service will provide the following Api.
+| Endpoint         | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| [connect](#connect) | Establish a database connection using JDBC URL |
+| [alive](#alive)     | Verify connection status                       |
+| [execute](#execute) | Execute SQL queries                            |
+| [cancel](#cancel)   | Cancel ongoing SQL execution                   |
+| [close](#close)     | Close database connection                      |
 
-| Api              | Desc                             |
-| ---------------- | -------------------------------- |
-| [connect](#connect) | Connect to database by jdbc url. |
-| [alive](#alive)     | Check connection is alive.       |
-| [execute](#execute) | Execute SQL by connection.       |
-| [cancel](#cancel)   | Cancel executing statement.      |
-| [close](#close)     | Close jdbc connection.           |
+## API Documentation
 
-## Request Example
-
-### connect
+### Connect
 
 ```http
 POST http://127.0.0.1:7823/connect
@@ -39,22 +37,22 @@ Content-Type: application/json
 }
 ```
 
-#### Parameter
+#### Parameters
 
-| Parameter  | Required | Type    | Description                                                                              |
-| ---------- | -------- | ------- | ---------------------------------------------------------------------------------------- |
-| id         | ✅       | String  | The ID of the connection.                                                                |
-| jdbcUrl    | ✅       | String  | The JDBC URL of the database.                                                            |
-| driverPath | ✅       | String  | The path to the JDBC driver. It can be a JAR file, a directory, or a compressed archive. |
-| driver     | ❌       | String  | The class name of the JDBC driver.                                                       |
-| username   | ❌       | String  | The username for the database.                                                           |
-| password   | ❌       | String  | The password for the database.                                                           |
-| readonly   | ❌       | Boolean | Whether to connect to the database in read-only mode.                                    |
+| Parameter  | Required | Type    | Description                                               |
+| ---------- | -------- | ------- | --------------------------------------------------------- |
+| id         | ✅       | String  | Unique identifier for the connection                      |
+| jdbcUrl    | ✅       | String  | JDBC connection URL                                       |
+| driverPath | ✅       | String  | Path to JDBC driver (supports JAR, directory, or archive) |
+| driver     | ❌       | String  | JDBC driver class name                                    |
+| username   | ❌       | String  | Database username                                         |
+| password   | ❌       | String  | Database password                                         |
+| readonly   | ❌       | Boolean | Enable read-only mode                                     |
 
-### alive
+### Check Connection Status
 
 ```http
-POST http://127.0.0.1:7823/connect
+POST http://127.0.0.1:7823/alive
 Content-Type: application/json
 
 {
@@ -62,7 +60,7 @@ Content-Type: application/json
 }
 ```
 
-### execute
+### Execute SQL
 
 ```http
 POST http://127.0.0.1:7823/execute
@@ -76,13 +74,13 @@ Content-Type: application/json
 }
 ```
 
-Parameter:
+#### Parameters
 
-- sql: The SQL you want to execute.
-- params: The parameters of the SQL, the format is like this: [{"value": "value1"}, {"value": "value2"}].
-- sqlList: the SQL list you want to batch execute, When parameter sqlList is not empty, parameter sql will be ignored.
+- `sql`: SQL query to execute
+- `params`: Query parameters in format `[{"value": "value1"}, {"value": "value2"}]`
+- `sqlList`: Batch SQL queries to execute (takes precedence over `sql` parameter)
 
-### cancel
+### Cancel Execution
 
 ```http
 POST http://127.0.0.1:7823/cancel
@@ -93,7 +91,7 @@ Content-Type: application/json
 }
 ```
 
-### close
+### Close Connection
 
 ```http
 POST http://127.0.0.1:7823/close
@@ -104,4 +102,10 @@ Content-Type: application/json
 }
 ```
 
-build: gradle fatJar
+## Building
+
+To build the project, run:
+
+```bash
+gradle fatJar
+```
