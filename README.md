@@ -1,6 +1,6 @@
 # JDBC Adapter Server
 
-A lightweight HTTP service that provides JDBC database access through HTTP endpoints.
+A lightweight HTTP service that provides JDBC database access.
 
 ## Quick Start
 
