@@ -175,7 +175,7 @@ public class JdbcExecutor {
         ResultSet rs = statement.getResultSet();
         Integer skipRows = executeDTO.getSkipRows();
         Integer fetchSize = executeDTO.getFetchSize();
-        log.info("执行结束, 开始获取数据...");
+        log.info("Query completed, start fetching data...");
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
         // 生成列信息
@@ -211,7 +211,7 @@ public class JdbcExecutor {
         } finally {
             closeStatement(statement);
         }
-        log.info("获取数据完成!");
+        log.info("Data fetching completed!");
         return new QueryBO(rows, columns);
     }
 
