@@ -145,14 +145,14 @@ public class JdbcExecutorServer {
         });
         server.createContext("/", exchange -> {
             String filePath = exchange.getRequestURI().getPath();
-            if (filePath.equals("/")) filePath = "index.html";
+            if (filePath.equals("/")) filePath = "/index.html";
 
             // 获取文件扩展名
             String extension = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase();
             String contentType = getContentType(extension);
 
             java.io.InputStream inputStream = JdbcExecutorServer.class.getClassLoader()
-                    .getResourceAsStream("static/" + filePath);
+                    .getResourceAsStream("static" + filePath);
             if (inputStream == null) {
                 log.error("Resource not found: " + filePath);
                 ServerUtil.notFound(exchange);
