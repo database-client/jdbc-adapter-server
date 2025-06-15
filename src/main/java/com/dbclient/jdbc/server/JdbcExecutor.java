@@ -100,22 +100,36 @@ public class JdbcExecutor {
 
     @SneakyThrows
     public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
-        log.info("Executing SQL: {}", sql);
-        String lowerSQL = sql.toLowerCase();
-        if (!PatternUtils.match(lowerSQL, "^\\s*(select|show|desc|describe|with)")) {
-            PreparedStatement statement = connection.prepareStatement(sql);
-            fillParams(statement, executeDTO.getParams());
-            int affectedRows = statement.executeUpdate();
+        PreparedStatement statement = connection.prepareStatement(sql);
+        fillParams(statement, executeDTO.getParams());
+        doPagination(sql, statement, executeDTO);
+        boolean hasResult = statement.execute();
+        if (hasResult) {
+            QueryBO queryBO = this.handleResult(statement, executeDTO);
+            return ExecuteResponse.builder()
+                    .rows(queryBO.getRows())
+                    .columns(queryBO.getColumns())
+                    .build();
+        } else {
+            int affectedRows = statement.getUpdateCount();
             closeStatement(statement);
             return ExecuteResponse.builder()
                     .affectedRows(affectedRows)
                     .build();
         }
-        QueryBO queryBO = this.executeQuery(sql, executeDTO);
-        return ExecuteResponse.builder()
-                .rows(queryBO.getRows())
-                .columns(queryBO.getColumns())
-                .build();
+    }
+
+    @SneakyThrows
+    private void doPagination(String sql, Statement statement, ExecuteDTO executeDTO) {
+        String lowerSQL = sql.toLowerCase();
+        boolean isQuery = PatternUtils.match(lowerSQL, "^\\s*(select|show|desc|describe|with)");
+        if (!isQuery) return;
+        Integer skipRows = executeDTO.getSkipRows();
+        Integer fetchSize = executeDTO.getFetchSize();
+        if (fetchSize != null && skipRows == null) {
+            statement.setMaxRows(fetchSize);
+            statement.setFetchSize(fetchSize);
+        }
     }
 
     @SneakyThrows
@@ -157,15 +171,10 @@ public class JdbcExecutor {
     }
 
     @SneakyThrows
-    public QueryBO executeQuery(String sql, ExecuteDTO executeDTO) {
-        Statement statement = newStatement();
+    public QueryBO handleResult(Statement statement, ExecuteDTO executeDTO) {
+        ResultSet rs = statement.getResultSet();
         Integer skipRows = executeDTO.getSkipRows();
         Integer fetchSize = executeDTO.getFetchSize();
-        if (fetchSize != null && skipRows == null) {
-            statement.setMaxRows(fetchSize);
-            statement.setFetchSize(fetchSize);
-        }
-        ResultSet rs = statement.executeQuery(sql);
         log.info("执行结束, 开始获取数据...");
         ResultSetMetaData metaData = rs.getMetaData();
         int columnCount = metaData.getColumnCount();
