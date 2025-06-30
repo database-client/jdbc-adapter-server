@@ -3,10 +3,11 @@
 
 <!--    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%-5p] %replace(%caller{1}){'\t|Caller.{1}0|\r\n', ''} : %m %n" />-->
     <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%-5p] : %m %n" />
+    <property name="console.log.pattern" value="%d{yyyy-MM-dd HH:mm:ss} [%5p] %-40.40logger{39}: %m %n" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${log.pattern}</pattern>
+            <pattern>${console.log.pattern}</pattern>
             <charset>utf-8</charset>
         </encoder>
     </appender>
