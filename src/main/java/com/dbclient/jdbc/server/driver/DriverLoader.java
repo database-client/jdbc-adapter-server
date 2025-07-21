@@ -41,15 +41,7 @@ public abstract class DriverLoader {
                 return true;
             });
         }
-        try {
-            if (StringUtils.isNotEmpty(driver)) {
-                Class.forName(driver);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
     }
-
 
     @SneakyThrows
     private static void loadDriver(String driverPath, String driverClassName) {

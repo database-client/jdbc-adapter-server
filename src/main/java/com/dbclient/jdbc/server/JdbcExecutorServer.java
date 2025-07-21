@@ -72,7 +72,7 @@ public class JdbcExecutorServer {
         server.createContext("/execute", exchange -> {
             ExecuteDTO executeDTO = ServerUtil.read(exchange, ExecuteDTO.class);
             String id = executeDTO.getId();
-            log.info("Execute SQL for {}, SQL: {}", id, executeDTO.getSql());
+            log.info("Received execute request for connection: {}", id);
             JdbcExecutor jdbcExecutor = executorMap.get(id);
             ExecuteResponse executeResponse = null;
             if (jdbcExecutor == null) {
