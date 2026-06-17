@@ -25,10 +25,19 @@ public class LibraryUtils {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
+    private static boolean isMac() {
+        return System.getProperty("os.name").toLowerCase().contains("mac");
+    }
 
     public static boolean isLibraryFile(String fileName) {
-        return fileName.endsWith(".dll") && isWindows();
+        String lower = fileName.toLowerCase();
+        if (isWindows()) {
+            return lower.endsWith(".dll");
+        }
+        if (isMac()) {
+            return lower.endsWith(".dylib");
+        }
+        return lower.endsWith(".so");
     }
 
 }
-

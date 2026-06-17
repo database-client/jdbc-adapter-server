@@ -29,6 +29,6 @@ public class TypeChecker {
         System.out.println(isPrimary(5)); // true, Integer
         System.out.println(isPrimary('c')); // true, Character
         System.out.println(isPrimary(5.0)); // true, Double
-        System.out.println(isPrimary("Hello")); // false, String
+        System.out.println(isPrimary("Hello")); // true, String
     }
 }
