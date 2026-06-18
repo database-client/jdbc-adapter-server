@@ -18,17 +18,15 @@ import oracle.sql.TIMESTAMPTZ;
 
 import java.nio.ByteBuffer;
 import java.sql.*;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class JdbcExecutor {
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private Set<Statement> statements = new HashSet<>();
+    private final Set<Statement> statements = Collections.synchronizedSet(new HashSet<>());
     private String aliveSQL;
     private final ConnectDTO option;
     private final Connection connection;
@@ -43,6 +41,14 @@ public class JdbcExecutor {
         if (connectDTO.isReadonly()) {
             connection.setReadOnly(true);
         }
+    }
+
+    public boolean matchesConnect(ConnectDTO connectDTO) {
+        return Objects.equals(option.getJdbcUrl(), connectDTO.getJdbcUrl())
+                && Objects.equals(option.getDriverPath(), connectDTO.getDriverPath())
+                && Objects.equals(option.getDriver(), connectDTO.getDriver())
+                && Objects.equals(option.getUsername(), connectDTO.getUsername())
+                && Objects.equals(option.getPassword(), connectDTO.getPassword());
     }
 
     private static Properties getConnectProperties(ConnectDTO connectDTO) {
@@ -62,16 +68,22 @@ public class JdbcExecutor {
 
     /**
      * Batch execute sql
-     *
-     * @param sqlList    sql array
-     * @param executeDTO
      */
     @SneakyThrows
     public List<ExecuteResponse> executeBatch(String[] sqlList, ExecuteDTO executeDTO) {
-        executeDTO.setParams(null);
-        return Arrays.stream(sqlList)
-                .map(s -> execute(s, executeDTO))
-                .collect(Collectors.toList());
+        SQLParam[][] paramsList = executeDTO.getParamsList();
+        List<ExecuteResponse> responses = new ArrayList<>(sqlList.length);
+        for (int i = 0; i < sqlList.length; i++) {
+            ExecuteDTO batchDTO = new ExecuteDTO();
+            batchDTO.setId(executeDTO.getId());
+            batchDTO.setSkipRows(executeDTO.getSkipRows());
+            batchDTO.setFetchSize(executeDTO.getFetchSize());
+            if (paramsList != null && i < paramsList.length) {
+                batchDTO.setParams(paramsList[i]);
+            }
+            responses.add(execute(sqlList[i], batchDTO));
+        }
+        return responses;
     }
 
     public boolean isOracle() {
@@ -82,10 +94,6 @@ public class JdbcExecutor {
         try {
             execute(aliveSQL, new ExecuteDTO());
         } catch (Exception e) {
-            if (e instanceof SQLSyntaxErrorException) {
-                log.error(e.getMessage(), e);
-                return;
-            }
             throw new RuntimeException(e);
         }
     }
@@ -101,21 +109,27 @@ public class JdbcExecutor {
     @SneakyThrows
     public synchronized ExecuteResponse execute(String sql, ExecuteDTO executeDTO) {
         PreparedStatement statement = connection.prepareStatement(sql);
-        fillParams(statement, executeDTO.getParams());
-        doPagination(sql, statement, executeDTO);
-        boolean hasResult = statement.execute();
-        if (hasResult) {
-            QueryBO queryBO = this.handleResult(statement, executeDTO);
-            return ExecuteResponse.builder()
-                    .rows(queryBO.getRows())
-                    .columns(queryBO.getColumns())
-                    .build();
-        } else {
-            int affectedRows = statement.getUpdateCount();
+        statements.add(statement);
+        try {
+            fillParams(statement, executeDTO.getParams());
+            doPagination(sql, statement, executeDTO);
+            boolean hasResult = statement.execute();
+            if (hasResult) {
+                QueryBO queryBO = this.handleResult(statement, executeDTO);
+                return ExecuteResponse.builder()
+                        .rows(queryBO.getRows())
+                        .columns(queryBO.getColumns())
+                        .build();
+            } else {
+                int affectedRows = statement.getUpdateCount();
+                closeStatement(statement);
+                return ExecuteResponse.builder()
+                        .affectedRows(affectedRows)
+                        .build();
+            }
+        } catch (Exception e) {
             closeStatement(statement);
-            return ExecuteResponse.builder()
-                    .affectedRows(affectedRows)
-                    .build();
+            throw e;
         }
     }
 
@@ -250,8 +264,8 @@ public class JdbcExecutor {
             return ((TIMESTAMP) object).toLocalDateTime().format(dateTimeFormatter);
         } else if (object instanceof TIMESTAMPTZ) {
             return ((TIMESTAMPTZ) object).toLocalDateTime().format(dateTimeFormatter);
-        } else if (object instanceof Date) {
-            return dateFormat.format(object);
+        } else if (object instanceof java.util.Date) {
+            return ((java.util.Date) object).toInstant().atZone(ZoneId.systemDefault()).format(dateTimeFormatter);
         } else if (object instanceof Array) {
             return Arrays.stream((Object[]) ((Array) object).getArray())
                     .map(JdbcExecutor::convertValue)
@@ -277,28 +291,38 @@ public class JdbcExecutor {
     }
 
     @SneakyThrows
-    public void cancel() {
-        for (Statement statement : statements) {
+    public synchronized void cancel() {
+        for (Statement statement : new ArrayList<>(statements)) {
             try {
                 statement.cancel();
             } catch (SQLException e) {
                 log.error(e.getMessage(), e);
             } finally {
-                statement.close();
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    log.error(e.getMessage(), e);
+                }
+                statements.remove(statement);
             }
         }
     }
 
-    public void close() throws Exception {
-        for (Statement statement : statements) {
+    public synchronized void close() throws Exception {
+        for (Statement statement : new ArrayList<>(statements)) {
             try {
                 statement.cancel();
             } catch (SQLException e) {
                 log.error(e.getMessage(), e);
             } finally {
-                statement.close();
+                try {
+                    statement.close();
+                } catch (SQLException e) {
+                    log.error(e.getMessage(), e);
+                }
             }
         }
+        statements.clear();
         if (connection != null) {
             connection.close();
         }

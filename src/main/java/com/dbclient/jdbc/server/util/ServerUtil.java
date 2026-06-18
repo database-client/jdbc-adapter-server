@@ -12,8 +12,6 @@ import java.util.stream.Collectors;
 
 public class ServerUtil {
 
-//    public static final Gson gson = new Gson(); // Deprecated, Gson will parse int as double
-
     @SneakyThrows
     public static <T> T read(HttpExchange exchange, Class<T> clazz) {
         String s = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))
@@ -33,6 +31,9 @@ public class ServerUtil {
             bytes = ((String) responseObj).getBytes(StandardCharsets.UTF_8);
         } else {
             String response = JSON.toJSON(responseObj);
+            if (response == null) {
+                response = "null";
+            }
             bytes = response.getBytes(StandardCharsets.UTF_8);
         }
         exchange.getResponseHeaders().set("Content-Type", contentType);

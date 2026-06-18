@@ -23,12 +23,13 @@ import java.nio.file.StandardCopyOption;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public abstract class DriverLoader {
 
-    private static final Map<String, Boolean> loaderMap = new HashMap<>();
-    private static final Map<String, Boolean> driverMap = new HashMap<>();
+    private static final Map<String, URLClassLoader> loaderMap = new ConcurrentHashMap<>();
+    private static final Set<String> registeredDrivers = ConcurrentHashMap.newKeySet();
 
 
     @SneakyThrows
@@ -36,41 +37,41 @@ public abstract class DriverLoader {
         String path = connectDTO.getDriverPath();
         String driver = connectDTO.getDriver();
         if (StringUtils.isNotEmpty(path)) {
-            loaderMap.computeIfAbsent(path, (k) -> {
-                DriverLoader.loadDriver(connectDTO.getDriverPath(), driver);
-                return true;
-            });
+            URLClassLoader classLoader = loaderMap.computeIfAbsent(path, DriverLoader::createUrlClassLoader);
+            registerDrivers(classLoader, driver);
         }
     }
 
     @SneakyThrows
-    private static void loadDriver(String driverPath, String driverClassName) {
+    private static URLClassLoader createUrlClassLoader(String driverPath) {
         File driverFile = new File(driverPath);
-
         if (!driverFile.exists()) {
             throw new RuntimeException("Driver path " + driverPath + " not exists!");
         }
+        List<URL> urls = collectDriverUrls(driverFile, driverPath);
+        return new URLClassLoader(urls.toArray(new URL[0]), DriverLoader.class.getClassLoader());
+    }
 
-        URLClassLoader driverLoader = getUrlClassLoader(driverFile, driverPath);
-
-        // Auto load driver
+    @SneakyThrows
+    private static void registerDrivers(URLClassLoader driverLoader, String driverClassName) {
         ServiceLoader<Driver> serviceLoader = ServiceLoader.load(Driver.class, driverLoader);
         for (Driver driver : serviceLoader) {
             String name = driver.getClass().getName();
-            if (driverMap.containsKey(name)) continue;
+            if (registeredDrivers.contains(name)) continue;
             DriverManager.registerDriver(new DriverShim(driver));
-            driverMap.put(name, Boolean.TRUE);
+            registeredDrivers.add(name);
         }
 
-        // Custom driver
-        if (StringUtils.isNotEmpty(driverClassName) && !driverMap.containsKey(driverClassName)) {
-            Driver customDriver = (Driver) Class.forName(driverClassName, true, driverLoader).newInstance();
+        if (StringUtils.isNotEmpty(driverClassName) && !registeredDrivers.contains(driverClassName)) {
+            Driver customDriver = (Driver) Class.forName(driverClassName, true, driverLoader)
+                    .getDeclaredConstructor()
+                    .newInstance();
             DriverManager.registerDriver(new DriverShim(customDriver));
-            driverMap.put(driverClassName, Boolean.TRUE);
+            registeredDrivers.add(driverClassName);
         }
     }
 
-    private static URLClassLoader getUrlClassLoader(File driverFile, String driverPath) throws IOException {
+    private static List<URL> collectDriverUrls(File driverFile, String driverPath) throws IOException {
         List<URL> urls = new ArrayList<>();
         if (driverPath.endsWith(".jar")) {
             urls.add(driverFile.toURI().toURL());
@@ -91,7 +92,7 @@ public abstract class DriverLoader {
                 throw e;
             }
         }
-        return new URLClassLoader(urls.toArray(new URL[0]));
+        return urls;
     }
 
     @SneakyThrows

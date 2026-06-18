@@ -13,18 +13,20 @@ import com.dbclient.jdbc.server.util.StringUtils;
 import com.sun.net.httpserver.HttpServer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 @Slf4j
 public class JdbcExecutorServer {
 
-    public static final Map<String, JdbcExecutor> executorMap = new HashMap<>();
+    public static final Map<String, JdbcExecutor> executorMap = new ConcurrentHashMap<>();
 
     private static final DB2ErrorTranslator translator = new DB2ErrorTranslator();
 
@@ -38,13 +40,30 @@ public class JdbcExecutorServer {
         });
         server.createContext("/connect", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
-            log.info("connect, params: {}", JSON.toJSON(connectDTO));
+            if (connectDTO == null || StringUtils.isEmpty(connectDTO.getId())) {
+                ServerUtil.writeJSONResponse(exchange, ConnectResponse.builder()
+                        .success(false)
+                        .err("Invalid request body")
+                        .build());
+                return;
+            }
+            log.info("connect, params: {}", JSON.toJSON(maskPassword(connectDTO)));
             String errorMessage = null;
             String fullErrorMessage = null;
             try {
                 String id = connectDTO.getId();
-                log.info("Create connection for " + id);
+                log.info("Create connection for {}", id);
                 JdbcExecutor jdbcExecutor = executorMap.get(id);
+                if (jdbcExecutor != null && !jdbcExecutor.matchesConnect(connectDTO)) {
+                    log.info("Connection config changed for {}, reconnecting", id);
+                    try {
+                        jdbcExecutor.close();
+                    } catch (Exception e) {
+                        log.error("Close old connection fail", e);
+                    }
+                    executorMap.remove(id);
+                    jdbcExecutor = null;
+                }
                 if (jdbcExecutor == null) {
                     jdbcExecutor = new JdbcExecutor(connectDTO);
                     jdbcExecutor.testAlive();
@@ -60,7 +79,6 @@ public class JdbcExecutorServer {
                     errorMessage = e.getClass().getName();
                     fullErrorMessage = errorMessage;
                 }
-                e.printStackTrace();
             } finally {
                 ServerUtil.writeJSONResponse(exchange, ConnectResponse.builder()
                         .success(errorMessage == null)
@@ -71,10 +89,14 @@ public class JdbcExecutorServer {
         });
         server.createContext("/execute", exchange -> {
             ExecuteDTO executeDTO = ServerUtil.read(exchange, ExecuteDTO.class);
-            String id = executeDTO.getId();
+            String id = executeDTO != null ? executeDTO.getId() : null;
             log.info("Received execute request for connection: {}", id);
+            if (executeDTO == null || StringUtils.isEmpty(id)) {
+                ServerUtil.writeJSONResponse(exchange, ExecuteResponse.builder().err("Invalid request body").build());
+                return;
+            }
             JdbcExecutor jdbcExecutor = executorMap.get(id);
-            ExecuteResponse executeResponse = null;
+            Object executeResponse = null;
             if (jdbcExecutor == null) {
                 ServerUtil.writeJSONResponse(exchange, ExecuteResponse.builder().err("Connection " + id + " not found!").build());
                 return;
@@ -83,7 +105,7 @@ public class JdbcExecutorServer {
             try {
                 String[] sqlList = executeDTO.getSqlList();
                 if (sqlList != null) {
-                    ServerUtil.writeJSONResponse(exchange, jdbcExecutor.executeBatch(sqlList, executeDTO));
+                    executeResponse = jdbcExecutor.executeBatch(sqlList, executeDTO);
                 } else {
                     executeResponse = jdbcExecutor.execute(executeDTO.getSql(), executeDTO);
                 }
@@ -99,74 +121,101 @@ public class JdbcExecutorServer {
         });
         server.createContext("/close", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
-            String id = connectDTO.getId();
-            log.info("Close connection for " + id);
-            JdbcExecutor jdbcExecutor = executorMap.get(id);
+            String id = connectDTO != null ? connectDTO.getId() : null;
+            log.info("Close connection for {}", id);
+            JdbcExecutor jdbcExecutor = id != null ? executorMap.get(id) : null;
             try {
                 if (jdbcExecutor != null) {
                     jdbcExecutor.close();
                 }
-            } catch (Exception ignored) {
-                log.error("Close connection fail", ignored);
+            } catch (Exception e) {
+                log.error("Close connection fail", e);
             } finally {
-                executorMap.remove(connectDTO.getJdbcUrl());
+                if (id != null) {
+                    executorMap.remove(id);
+                }
                 ServerUtil.writeJSONResponse(exchange, "");
             }
         });
         server.createContext("/cancel", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
-            String id = connectDTO.getId();
-            log.info("Cancel execute for " + id);
-            JdbcExecutor jdbcExecutor = executorMap.get(id);
-            if (jdbcExecutor != null) {
-                jdbcExecutor.cancel();
+            String id = connectDTO != null ? connectDTO.getId() : null;
+            log.info("Cancel execute for {}", id);
+            try {
+                if (id != null) {
+                    JdbcExecutor jdbcExecutor = executorMap.get(id);
+                    if (jdbcExecutor != null) {
+                        jdbcExecutor.cancel();
+                    }
+                }
+            } finally {
+                ServerUtil.writeJSONResponse(exchange, "");
             }
         });
         server.createContext("/alive", exchange -> {
             ConnectDTO connectDTO = ServerUtil.read(exchange, ConnectDTO.class);
-            String id = connectDTO.getId();
+            String id = connectDTO != null ? connectDTO.getId() : null;
             log.info("Check connection {} alive..", id);
-            JdbcExecutor jdbcExecutor = executorMap.get(id);
-            AliveCheckResponse aliveCheckResponse = null;
-            try {
-                if (jdbcExecutor != null) {
-                    boolean alive = !jdbcExecutor.getConnection().isClosed();
-                    if (alive) {
-                        jdbcExecutor.testAlive();
+            AliveCheckResponse aliveCheckResponse = new AliveCheckResponse(false);
+            if (id != null) {
+                JdbcExecutor jdbcExecutor = executorMap.get(id);
+                try {
+                    if (jdbcExecutor != null) {
+                        boolean alive = !jdbcExecutor.getConnection().isClosed();
+                        if (alive) {
+                            jdbcExecutor.testAlive();
+                        }
+                        aliveCheckResponse = new AliveCheckResponse(alive);
                     }
-                    aliveCheckResponse = new AliveCheckResponse(alive);
+                } catch (Exception e) {
+                    aliveCheckResponse = new AliveCheckResponse(false);
+                    log.error(e.getMessage(), e);
                 }
-            } catch (Exception e) {
-                aliveCheckResponse = new AliveCheckResponse(false);
-                e.printStackTrace();
-            } finally {
-                ServerUtil.writeJSONResponse(exchange, aliveCheckResponse);
             }
+            ServerUtil.writeJSONResponse(exchange, aliveCheckResponse);
         });
         server.createContext("/", exchange -> {
             String filePath = exchange.getRequestURI().getPath();
             if (filePath.equals("/")) filePath = "/index.html";
+            if (filePath.contains("..")) {
+                ServerUtil.notFound(exchange);
+                return;
+            }
 
-            // 获取文件扩展名
             String extension = filePath.substring(filePath.lastIndexOf(".") + 1).toLowerCase();
             String contentType = getContentType(extension);
 
-            java.io.InputStream inputStream = JdbcExecutorServer.class.getClassLoader()
-                    .getResourceAsStream("static" + filePath);
-            if (inputStream == null) {
-                log.error("Resource not found: " + filePath);
-                ServerUtil.notFound(exchange);
-            } else {
-                byte[] bytes = new byte[inputStream.available()];
-                inputStream.read(bytes);
-                inputStream.close();
-                ServerUtil.writeResponse(exchange, bytes, contentType);
+            try (InputStream inputStream = JdbcExecutorServer.class.getClassLoader()
+                    .getResourceAsStream("static" + filePath)) {
+                if (inputStream == null) {
+                    log.error("Resource not found: {}", filePath);
+                    ServerUtil.notFound(exchange);
+                } else {
+                    byte[] bytes = IOUtils.toByteArray(inputStream);
+                    ServerUtil.writeResponse(exchange, bytes, contentType);
+                }
             }
         });
         server.setExecutor(Executors.newCachedThreadPool());
         server.start();
         log.info("HTTP server started on port {}, Cost time: {} ms", server.getAddress().getPort(), new Date().getTime() - start);
         log.info("JAVA library path: {}", LibraryUtils.getJavaLibraryPath());
+    }
+
+    private static ConnectDTO maskPassword(ConnectDTO connectDTO) {
+        ConnectDTO masked = new ConnectDTO();
+        masked.setId(connectDTO.getId());
+        masked.setJdbcUrl(connectDTO.getJdbcUrl());
+        masked.setDriver(connectDTO.getDriver());
+        masked.setDriverPath(connectDTO.getDriverPath());
+        masked.setUsername(connectDTO.getUsername());
+        masked.setPassword(connectDTO.getPassword() != null ? "******" : null);
+        masked.setReadonly(connectDTO.isReadonly());
+        masked.setAliveSQL(connectDTO.getAliveSQL());
+        masked.setNoTableName(connectDTO.isNoTableName());
+        masked.setSupportForward(connectDTO.isSupportForward());
+        masked.setProperties(connectDTO.getProperties());
+        return masked;
     }
 
     private static String getContentType(String extension) {
