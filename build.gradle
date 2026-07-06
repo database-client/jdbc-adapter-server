@@ -13,6 +13,13 @@ tasks.withType(JavaCompile) {
 group 'com.dbclient.jdbc'
 version '1.0'
 
+tasks.register('jdbcExecutorServer', JavaExec) {
+    group = 'application'
+    description = 'Runs com.dbclient.jdbc.server.JdbcExecutorServer.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.dbclient.jdbc.server.JdbcExecutorServer'
+}
+
 tasks.jar {
     // Jar Info
     archiveClassifier.set('all')
@@ -56,8 +63,8 @@ dependencies {
     implementation 'org.apache.commons:commons-compress:1.27.1'
 
     // Lombok
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
-    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.30'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.46'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.46'
 }
 
 test {
